@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Liberado | Drenagem Linfática Ilustrada</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #334155;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #f8fafc;
+      padding-bottom: 40px;
+      padding-top: 40px;
+    }
+    .main-table {
+      background-color: #ffffff;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+      border-spacing: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.03);
+      border: 1px solid #e2e8f0;
+    }
+    .header {
+      background: linear-gradient(135deg, #0052FF 0%, #0033AA 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .header-logo {
+      font-size: 50px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      color: #ffffff;
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .content {
+      padding: 40px 30px;
+      background-color: #ffffff;
+    }
+    .content h2 {
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 25px;
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 35px;
+    }
+    .cta-button {
+      background-color: #0052FF;
+      color: #ffffff !important;
+      display: inline-block;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.25);
+      transition: background-color 0.2s ease;
+    }
+    .footer {
+      background-color: #f1f5f9;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+    .footer p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+    }
+    .footer a {
+      color: #0052FF;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" align="center">
+      <!-- HEADER -->
+      <tr>
+        <td class="header">
+          <div class="header-logo">🎓</div>
+          <h1>Área de Membros</h1>
+        </td>
+      </tr>
+      
+      <!-- CONTENT -->
+      <tr>
+        <td class="content">
+          <h2>Seu acesso foi liberado! 🎉</h2>
+          <p>Olá, <strong>{{ if .Data.name }}{{ .Data.name }}{{ else }}Aluno(a){{ end }}</strong>,</p>
+          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está gerado e pronto.</p>
+          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para definir sua senha de acesso e ativar a sua conta:</p>
+          
+          <div class="button-container">
+            <a href="{{ .ConfirmationURL }}" class="cta-button">Definir Senha e Acessar</a>
+          </div>
+          
+          <p style="margin-bottom: 0; font-size: 14px; color: #64748b; font-style: italic;">
+            Obs: Se o botão acima não funcionar, copie e cole o link a seguir no seu navegador: <br>
+            <a href="{{ .ConfirmationURL }}" style="color: #0052FF; word-break: break-all;">{{ .ConfirmationURL }}</a>
+          </p>
+        </td>
+      </tr>
+      
+      <!-- FOOTER -->
+      <tr>
+        <td class="footer">
+          <p>Você recebeu este e-mail porque realizou a compra do material digital de Drenagem Linfática.</p>
+          <p>&copy; 2026 Guia de Drenagem Linfática. Todos os direitos reservados.</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
