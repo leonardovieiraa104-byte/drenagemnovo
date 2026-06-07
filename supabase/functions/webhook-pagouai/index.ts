@@ -68,22 +68,54 @@ serve(async (req) => {
 
       console.log(`Aluno ${email} cadastrado/atualizado na tabela pública com sucesso!`, data)
 
-      // Convidar o usuário através do Supabase Auth (isso faz o próprio Supabase disparar o e-mail de acesso)
+      // Gerar o link de convite silenciosamente pelo Supabase Auth (sem enviar e-mail pelo Supabase)
       const siteUrl = "https://drenagemlinfatica.netlify.app/area-de-membros/"
-      
-      const { data: inviteData, error: inviteError } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
-        redirectTo: siteUrl,
-        data: { name: nome }
-      })
+      let actionLink = siteUrl
 
-      if (inviteError) {
-        console.error("Erro ao disparar e-mail de convite pelo Supabase Auth:", inviteError)
-        // Não falhamos a requisição pois o aluno já foi inserido na tabela pública de acesso
-      } else {
-        console.log(`E-mail de convite enviado via Supabase para: ${email}`, inviteData)
+      try {
+        const { data: linkData, error: linkError } = await supabaseClient.auth.admin.generateLink({
+          type: 'invite',
+          email: email,
+          options: {
+            redirectTo: siteUrl,
+            data: { name: nome }
+          }
+        })
+
+        if (linkError) throw linkError
+        actionLink = linkData.properties.actionLink
+        console.log("Link de convite gerado com sucesso:", actionLink)
+      } catch (linkErr) {
+        console.error("Erro ao gerar link de convite no Supabase Auth:", linkErr)
       }
 
-      return new Response(JSON.stringify({ message: "Aluno cadastrado e e-mail disparado!", data }), {
+      // Disparar o e-mail personalizado usando a API do Resend
+      const resendToken = "re_3jsNvZDB_C8nZfu62qGF2NmJ9S1BqsgRN"
+      const emailHtml = getEmailHtml(nome, actionLink)
+
+      try {
+        const resendResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            from: "Drenagem Linfática <acesso@drenagemlinfatica.hyzencompra.shop>",
+            to: [email],
+            subject: "Seu acesso à Área de Membros está liberado! 🎓",
+            html: emailHtml
+          })
+        })
+
+        const resendResult = await resendResponse.json()
+        if (!resendResponse.ok) throw new Error(JSON.stringify(resendResult))
+        console.log("E-mail enviado com sucesso via Resend:", resendResult)
+      } catch (emailErr) {
+        console.error("Erro ao enviar e-mail via Resend:", emailErr)
+      }
+
+      return new Response(JSON.stringify({ message: "Aluno cadastrado e e-mail disparado via Resend!", data }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
@@ -102,3 +134,150 @@ serve(async (req) => {
     })
   }
 })
+
+function getEmailHtml(name: string, actionLink: string) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Liberado | Drenagem Linfática Ilustrada</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #334155;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #f8fafc;
+      padding-bottom: 40px;
+      padding-top: 40px;
+    }
+    .main-table {
+      background-color: #ffffff;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+      border-spacing: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.03);
+      border: 1px solid #e2e8f0;
+    }
+    .header {
+      background: linear-gradient(135deg, #0052FF 0%, #0033AA 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .header-logo {
+      font-size: 50px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      color: #ffffff;
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .content {
+      padding: 40px 30px;
+      background-color: #ffffff;
+    }
+    .content h2 {
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 25px;
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 35px;
+    }
+    .cta-button {
+      background-color: #0052FF;
+      color: #ffffff !important;
+      display: inline-block;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.25);
+    }
+    .footer {
+      background-color: #f1f5f9;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+    .footer p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+    }
+    .footer a {
+      color: #0052FF;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" align="center">
+      <!-- HEADER -->
+      <tr>
+        <td class="header">
+          <div class="header-logo">🎓</div>
+          <h1>Área de Membros</h1>
+        </td>
+      </tr>
+      
+      <!-- CONTENT -->
+      <tr>
+        <td class="content">
+          <h2>Seu acesso foi liberado! 🎉</h2>
+          <p>Olá, <strong>${name || 'Aluno(a)'}</strong>,</p>
+          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está gerado e pronto.</p>
+          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para definir sua senha de acesso e ativar a sua conta:</p>
+          
+          <div class="button-container">
+            <a href="${actionLink}" class="cta-button" style="color: #ffffff;">Definir Senha e Acessar</a>
+          </div>
+          
+          <p style="margin-bottom: 0; font-size: 14px; color: #64748b; font-style: italic;">
+            Obs: Se o botão acima não funcionar, copie e cole o link a seguir no seu navegador: <br>
+            <a href="${actionLink}" style="color: #0052FF; word-break: break-all;">${actionLink}</a>
+          </p>
+        </td>
+      </tr>
+      
+      <!-- FOOTER -->
+      <tr>
+        <td class="footer">
+          <p>Você recebeu este e-mail porque realizou a compra do material digital de Drenagem Linfática.</p>
+          <p>&copy; 2026 Guia de Drenagem Linfática. Todos os direitos reservados.</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`
+}
