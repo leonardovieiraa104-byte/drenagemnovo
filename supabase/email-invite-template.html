@@ -118,16 +118,25 @@
         <td class="content">
           <h2>Seu acesso foi liberado! 🎉</h2>
           <p>Olá, <strong>{{ if .Data.name }}{{ .Data.name }}{{ else }}Aluno(a){{ end }}</strong>,</p>
-          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está gerado e pronto.</p>
-          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para definir sua senha de acesso e ativar a sua conta:</p>
+          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está liberado.</p>
+          
+          <!-- Box Informativo de Alerta (Login Sem Senha) -->
+          <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+            <p style="margin: 0; font-size: 15px; color: #991b1b; line-height: 1.5; font-weight: 500;">
+              <strong>⚠️ IMPORTANTE: LOGIN SEM SENHA</strong><br>
+              A nossa área de membros <strong>NÃO possui senha</strong>. Para fazer o login e acessar os seus materiais, você deve informar <strong>APENAS o seu e-mail de compra</strong>. Não é necessário criar ou digitar nenhuma senha!
+            </p>
+          </div>
+
+          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para entrar na área de membros:</p>
           
           <div class="button-container">
-            <a href="{{ .ConfirmationURL }}" class="cta-button">Definir Senha e Acessar</a>
+            <a href="https://drenagemlinfatica.netlify.app/area-de-membros/" class="cta-button">Acessar Área de Membros</a>
           </div>
           
           <p style="margin-bottom: 0; font-size: 14px; color: #64748b; font-style: italic;">
             Obs: Se o botão acima não funcionar, copie e cole o link a seguir no seu navegador: <br>
-            <a href="{{ .ConfirmationURL }}" style="color: #0052FF; word-break: break-all;">{{ .ConfirmationURL }}</a>
+            <a href="https://drenagemlinfatica.netlify.app/area-de-membros/" style="color: #0052FF; word-break: break-all;">https://drenagemlinfatica.netlify.app/area-de-membros/</a>
           </p>
         </td>
       </tr>

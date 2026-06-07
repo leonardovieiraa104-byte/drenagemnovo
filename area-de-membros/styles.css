@@ -1007,6 +1007,8 @@ body {
     flex-shrink: 0;
     container-type: inline-size;
     /* Ativa consultas de contêiner para fontes responsivas */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 
 .cert-student-name {
@@ -1068,36 +1070,31 @@ body {
     opacity: 0.85;
 }
 
-/* =========================================
-   ESTILOS DE IMPRESSÃO (@media print)
-   ========================================= */
 @media print {
+    /* Ocultar toda a estrutura do app que não seja o modal do certificado */
+    body > *:not(.cert-modal-overlay) {
+        display: none !important;
+    }
 
-    /* Ocultar tudo na página exceto o container do certificado */
     body {
         background-color: #FFFFFF !important;
-        color: #000000 !important;
-    }
-
-    body * {
-        visibility: hidden;
-    }
-
-    .cert-modal-overlay,
-    .cert-modal-overlay * {
-        visibility: visible;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .cert-modal-overlay {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
         background: none !important;
         padding: 0 !important;
-        display: block !important;
-        overflow: visible !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
         z-index: 99999 !important;
     }
 
@@ -1106,41 +1103,61 @@ body {
         box-shadow: none !important;
         background: none !important;
         width: 100% !important;
+        height: 100% !important;
         max-width: none !important;
         border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .cert-modal-header,
     .cert-modal-footer {
-        display: none !important;
-        /* Ocultar botões e título */
+        display: none !important; /* Ocultar botões e título */
     }
 
     .cert-modal-body {
         padding: 0 !important;
         background: none !important;
-        overflow: visible !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
     }
 
     .certificate-container {
         visibility: visible !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100% !important;
-        height: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
         box-shadow: none !important;
         border: none !important;
         margin: 0 !important;
-        padding: 40px !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background-image: url('https://i.ibb.co/XfLgc3W3/image.png') !important;
+        background-size: contain !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .certificate-container * {
         visibility: visible !important;
     }
 
+    .cert-date-block {
+        bottom: 15.8% !important; /* Subir a data um pouco mais na hora de imprimir */
+    }
+
     @page {
-        size: landscape;
+        size: A4 landscape;
         margin: 0;
     }
 }
