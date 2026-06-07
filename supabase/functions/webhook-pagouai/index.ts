@@ -68,30 +68,12 @@ serve(async (req) => {
 
       console.log(`Aluno ${email} cadastrado/atualizado na tabela pública com sucesso!`, data)
 
-      // Gerar o link de convite silenciosamente pelo Supabase Auth (sem enviar e-mail pelo Supabase)
+      // O link de acesso à área de membros é direto (sem autenticação de convite com senha via Supabase Auth)
       const siteUrl = "https://drenagemlinfatica.netlify.app/area-de-membros/"
-      let actionLink = siteUrl
-
-      try {
-        const { data: linkData, error: linkError } = await supabaseClient.auth.admin.generateLink({
-          type: 'invite',
-          email: email,
-          options: {
-            redirectTo: siteUrl,
-            data: { name: nome }
-          }
-        })
-
-        if (linkError) throw linkError
-        actionLink = linkData.properties.actionLink
-        console.log("Link de convite gerado com sucesso:", actionLink)
-      } catch (linkErr) {
-        console.error("Erro ao gerar link de convite no Supabase Auth:", linkErr)
-      }
 
       // Disparar o e-mail personalizado usando a API do Resend
       const resendToken = "re_3jsNvZDB_C8nZfu62qGF2NmJ9S1BqsgRN"
-      const emailHtml = getEmailHtml(nome, actionLink)
+      const emailHtml = getEmailHtml(nome, siteUrl)
 
       try {
         const resendResponse = await fetch("https://api.resend.com/emails", {
@@ -255,11 +237,20 @@ function getEmailHtml(name: string, actionLink: string) {
         <td class="content">
           <h2>Seu acesso foi liberado! 🎉</h2>
           <p>Olá, <strong>${name || 'Aluno(a)'}</strong>,</p>
-          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está gerado e pronto.</p>
-          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para definir sua senha de acesso e ativar a sua conta:</p>
+          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está liberado.</p>
+          
+          <!-- Box Informativo de Alerta (Login Sem Senha) -->
+          <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+            <p style="margin: 0; font-size: 15px; color: #991b1b; line-height: 1.5; font-weight: 500;">
+              <strong>⚠️ IMPORTANTE: LOGIN SEM SENHA</strong><br>
+              A nossa área de membros <strong>NÃO possui senha</strong>. Para fazer o login e acessar os seus materiais, você deve informar <strong>APENAS o seu e-mail de compra</strong>. Não é necessário criar ou digitar nenhuma senha!
+            </p>
+          </div>
+
+          <p>Para começar os seus estudos e ter acesso aos materiais de bônus e emissão do seu certificado, clique no botão abaixo para entrar na área de membros:</p>
           
           <div class="button-container">
-            <a href="${actionLink}" class="cta-button" style="color: #ffffff;">Definir Senha e Acessar</a>
+            <a href="${actionLink}" class="cta-button" style="color: #ffffff;">Acessar Área de Membros</a>
           </div>
           
           <p style="margin-bottom: 0; font-size: 14px; color: #64748b; font-style: italic;">

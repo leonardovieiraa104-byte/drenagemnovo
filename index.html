@@ -657,18 +657,34 @@
             });
         }
 
-        // Sticky Bottom CTA Bar Scroll Logic
+        // Sticky Bottom CTA Bar Scroll and Click Logic
         const heroSection = document.querySelector('.hero');
         const stickyBar = document.getElementById('sticky-cta-bar');
+        const plansSection = document.getElementById('planos');
+        const stickyBtn = document.querySelector('.sticky-btn');
+        let clickedCTA = false;
 
         window.addEventListener('scroll', () => {
+            if (!heroSection || !stickyBar || !plansSection) return;
             const heroHeight = heroSection.offsetHeight;
-            if (window.scrollY > heroHeight) {
+            const plansTop = plansSection.getBoundingClientRect().top;
+
+            if (window.scrollY > heroHeight && plansTop > window.innerHeight && !clickedCTA) {
                 stickyBar.classList.add('show');
             } else {
                 stickyBar.classList.remove('show');
             }
         });
+
+        if (stickyBtn && stickyBar) {
+            stickyBtn.addEventListener('click', () => {
+                clickedCTA = true;
+                stickyBar.classList.remove('show');
+                setTimeout(() => {
+                    clickedCTA = false;
+                }, 1000);
+            });
+        }
     </script>
 
 </body>

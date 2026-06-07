@@ -739,6 +739,54 @@ ul {
 .basic-plan {
     border: 1px solid rgba(0, 82, 255, 0.2);
     box-shadow: var(--shadow-soft);
+    padding: 1.8rem 1.2rem;
+}
+
+.basic-plan .plan-name {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.basic-plan .price {
+    margin-bottom: 1rem;
+}
+
+.basic-plan .price .value {
+    font-size: 2.8rem;
+}
+
+.basic-plan .plan-features {
+    margin-bottom: 1.2rem;
+}
+
+.basic-plan .plan-features li {
+    margin-bottom: 0.6rem;
+    font-size: 0.85rem;
+}
+
+.basic-plan .check-icon,
+.basic-plan .x-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+.basic-plan .check-icon i,
+.basic-plan .x-icon i {
+    font-size: 0.8rem;
+}
+
+.basic-plan .plan-badge-container {
+    margin-bottom: 1rem;
+}
+
+.basic-plan .plan-badge-img {
+    max-height: 70px;
+}
+
+.basic-plan .cta-button {
+    padding: 12px 16px;
+    font-size: 0.95rem;
 }
 
 .recommended-badge {
