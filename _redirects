@@ -1,0 +1,2 @@
+# Netlify Redirects
+/login           /area-de-membros/             301

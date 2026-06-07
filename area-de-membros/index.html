@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Área de Membros | Drenagem Linfática Ilustrada</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Poppins:wght@500;700;800&family=Mrs+Saint+Delafield&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css?v=9">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://i.ibb.co/bMTCQGbL/image.png">
+</head>
+
+<body>
+
+    <!-- =========================================
+       1. TELA DE LOGIN
+       ========================================= -->
+    <div class="login-container" id="login-screen">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="ph-bold ph-graduation-cap"></i>
+            </div>
+            <h2>Bem-vindo(a) de volta!</h2>
+            <p>Insira seu e-mail de compra para acessar seus materiais exclusivos.</p>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label class="input-label" for="login-email">E-mail de Acesso</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="login-email" class="input-field" placeholder="exemplo@email.com"
+                            required>
+                        <i class="ph ph-envelope-simple"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn">Entrar na Área de Membros</button>
+                <div class="login-error" id="login-error-msg">Por favor, insira um e-mail válido.</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================
+       2. APP CONTAINER (DASHBOARD)
+       ========================================= -->
+    <div class="app-container" id="app-screen">
+
+        <!-- SIDEBAR (DESKTOP) -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="ph-bold ph-graduation-cap"></i>
+                    </div>
+                    <h1>Área de<br>Membros</h1>
+                </div>
+
+                <div class="user-profile-box">
+                    <div class="user-label">Aluno conectado</div>
+                    <div class="user-email" id="sidebar-user-email">aluno@email.com</div>
+                </div>
+
+                <!-- Progresso Geral -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span class="progress-title">Seu progresso</span>
+                        <span class="progress-pct" id="sidebar-progress-pct">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="sidebar-progress-fill"></div>
+                    </div>
+                    <span class="progress-subtext" id="sidebar-progress-subtext">0 de 4 concluídos</span>
+                </div>
+            </div>
+
+            <div class="logout-btn-wrapper">
+                <button class="logout-btn" onclick="handleLogout()">
+                    <i class="ph-bold ph-sign-out"></i> Sair do Painel
+                </button>
+            </div>
+        </aside>
+
+        <!-- CABEÇALHO MOBILE -->
+        <header class="mobile-header">
+            <div class="mobile-logo">
+                <div class="mobile-logo-icon">
+                    <i class="ph-bold ph-graduation-cap"></i>
+                </div>
+                <h1>Área de Membros</h1>
+            </div>
+            <button class="mobile-logout" onclick="handleLogout()" title="Sair">
+                <i class="ph-bold ph-sign-out"></i>
+            </button>
+        </header>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="main-content">
+            <!-- Título da página -->
+            <div class="main-title-section">
+                <h2 id="greeting-title">Olá, Aluno(a)!</h2>
+                <p>Acesse seus materiais de estudo abaixo e marque cada um como concluído para liberar o seu
+                    certificado.</p>
+            </div>
+
+            <!-- Progresso Geral Mobile -->
+            <div class="mobile-progress-card">
+                <div class="progress-header">
+                    <span class="progress-title">Seu progresso geral</span>
+                    <span class="progress-pct" id="mobile-progress-pct">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="mobile-progress-fill"></div>
+                </div>
+                <span class="progress-subtext" id="mobile-progress-subtext">0 de 4 concluídos</span>
+            </div>
+
+            <!-- Grid de Entregáveis -->
+            <div class="deliverables-grid">
+                <!-- Card 1: Principal -->
+                <div class="deliverable-card">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/Y7pXcK77/image.png" alt="Guia Principal">
+                        <span class="card-tag">Principal</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>+300 Técnicas de Drenagem Linfática Ilustradas</h3>
+                        <p>Nosso guia visual principal completo com mais de 300 técnicas ilustradas passo a passo,
+                            organizadas de forma objetiva para aplicação imediata.</p>
+                        <div class="card-footer-actions">
+                            <a href="../Principal Entregável/material-300.pdf" target="_blank"
+                                class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="0"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Bônus 1 -->
+                <div class="deliverable-card">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/zVTmNBzh/image.png" alt="Bônus 1">
+                        <span class="card-tag">Bônus 1</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Atlas Visual do Sistema Linfático</h3>
+                        <p>Um mapa ilustrado de alta definição contendo as principais estruturas, capilares e fluxos do
+                            sistema linfático para consulta rápida antes e durante os atendimentos.</p>
+                        <div class="card-footer-actions">
+                            <a href="../bônus/atlas-visual-bonus.pdf" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="1"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Bônus 2 -->
+                <div class="deliverable-card">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/jkg38zfj/image.png" alt="Bônus 2">
+                        <span class="card-tag">Bônus 2</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Manual Completo de Pré e Pós-Atendimento</h3>
+                        <p>Guia operacional prático com as melhores diretrizes e cuidados clínicos necessários para
+                            gerenciar com segurança seus clientes antes e após qualquer sessão estética.</p>
+                        <div class="card-footer-actions">
+                            <a href="../bônus/manual_completo.pdf" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="2"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Bônus 3 -->
+                <div class="deliverable-card">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/S4NfvBtS/image.png" alt="Bônus 3">
+                        <span class="card-tag">Bônus 3</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Caderno Profissional de Anamnese para Estética</h3>
+                        <p>Coleção de fichas e questionários estruturados prontos para impressão para coletar
+                            informações cruciais sobre histórico de saúde e dores de seus clientes.</p>
+                        <div class="card-footer-actions">
+                            <a href="../bônus/anamnese_caderno.pdf" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="3"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção do Certificado -->
+            <div class="certificate-section-wrapper">
+                <!-- Estado LINDADO (Locked) -->
+                <div class="cert-card-box locked" id="cert-box-locked">
+                    <div class="locked-overlay">
+                        <div class="locked-icon-wrapper">
+                            <i class="ph-bold ph-lock-key"></i>
+                        </div>
+                        <h3>Certificado de Conclusão Bloqueado</h3>
+                        <p>Complete a leitura e marque como concluído os 4 materiais de estudos acima para liberar seu
+                            certificado personalizado.</p>
+                    </div>
+                </div>
+
+                <!-- Estado DESBLOQUEADO (Unlocked) -->
+                <div class="cert-card-box unlocked" id="cert-box-unlocked" style="display: none;">
+                    <div class="unlocked-content" style="display: block;">
+                        <div class="unlocked-header">
+                            <div class="unlocked-icon-wrapper">
+                                <i class="ph-fill ph-certificate"></i>
+                            </div>
+                            <div class="unlocked-text">
+                                <h3>Parabéns, você concluiu todo o material! 🎓</h3>
+                                <p>Insira seu nome abaixo para emitir o seu certificado oficial de conclusão.</p>
+                            </div>
+                        </div>
+
+                        <div class="cert-form-box">
+                            <div class="cert-input-wrapper">
+                                <label for="student-name-input">Nome Completo do Aluno</label>
+                                <input type="text" id="student-name-input" class="cert-input-field"
+                                    placeholder="Digite seu nome para o certificado..." required>
+                            </div>
+                            <button class="generate-btn" onclick="generateCertificate()">
+                                <i class="ph-bold ph-file-pdf"></i> Gerar Certificado Oficial
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- =========================================
+       3. MODAL DO CERTIFICADO GERADO
+       ========================================= -->
+    <div class="cert-modal-overlay" id="cert-modal">
+        <div class="cert-modal-content">
+            <div class="cert-modal-header">
+                <h3><i class="ph-fill ph-trophy"></i> Seu Certificado Oficial de Conclusão</h3>
+                <button class="close-cert-btn" onclick="closeCertModal()"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="cert-modal-body">
+                <!-- O CERTIFICADO PROPRIAMENTE DITO (A4 Paisagem Proporcional com Imagem de Fundo) -->
+                <div class="certificate-container" id="printable-certificate">
+                    <div class="cert-student-name" id="cert-display-name">Nome do Aluno</div>
+                    <div class="cert-date-block">
+                        <span id="cert-date-day">06</span>
+                        <span id="cert-date-month">06</span>
+                        <span id="cert-date-year">2026</span>
+                    </div>
+                    <div class="cert-hash-text" id="cert-display-hash">#DL-300-8A7F</div>
+                </div>
+            </div>
+            <div class="cert-modal-footer">
+                <button class="print-btn" onclick="printCertificate()">
+                    <i class="ph-bold ph-printer"></i> Imprimir / Salvar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+       4. LOGICA JAVASCRIPT
+       ========================================= -->
+    <script>
+        // Inicializar o cliente Supabase
+        const supabaseUrl = 'https://matmkssuqtodhunmtmvu.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hdG1rc3N1cXRvZGh1bm10bXZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3ODQ3NDEsImV4cCI6MjA5NjM2MDc0MX0.CiSCAO78W8mWJnKwpl73niZAZpNgTstnq4Yo8D5MFVY';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Iniciar página e checar estados de sessão
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSessionState();
+        });
+
+        // Função de Login
+        async function handleLogin(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('login-email');
+            const errorMsg = document.getElementById('login-error-msg');
+            const email = emailInput.value.trim().toLowerCase();
+
+            // Validação de regex do e-mail
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                errorMsg.textContent = 'Por favor, insira um e-mail válido.';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+
+            // Carregamento no botão
+            const submitBtn = e.target.querySelector('.login-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verificando acesso...';
+
+            try {
+                // Consultar se o aluno está cadastrado no Supabase
+                const { data, error } = await supabaseClient
+                    .from('alunos')
+                    .select('*')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (!data) {
+                    errorMsg.textContent = 'E-mail não cadastrado ou sem acesso à área de membros.';
+                    errorMsg.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+
+                // Armazenar sessão
+                sessionStorage.setItem('user_logged_in', 'true');
+                sessionStorage.setItem('user_email', email);
+                sessionStorage.setItem('user_name', data.nome || '');
+                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false]));
+                sessionStorage.setItem('cert_key', data.chave_certificado || '');
+                sessionStorage.setItem('cert_date', data.data_conclusao || '');
+
+                // Atualizar e exibir dashboard
+                checkSessionState();
+            } catch (err) {
+                console.error("Erro no login:", err);
+                errorMsg.textContent = 'Erro de conexão com o banco de dados. Tente novamente.';
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // Função de Logout
+        function handleLogout() {
+            sessionStorage.removeItem('user_logged_in');
+            sessionStorage.removeItem('user_email');
+            sessionStorage.removeItem('user_name');
+            sessionStorage.removeItem('user_progress');
+            sessionStorage.removeItem('cert_key');
+            sessionStorage.removeItem('cert_date');
+
+            // Limpar formulário de login e resetar visual
+            document.getElementById('login-email').value = '';
+
+            // Recarregar tela
+            checkSessionState();
+        }
+
+        // Checagem de Estado da Sessão
+        function checkSessionState() {
+            const isLoggedIn = sessionStorage.getItem('user_logged_in') === 'true';
+            const loginScreen = document.getElementById('login-screen');
+            const appScreen = document.getElementById('app-screen');
+
+            if (isLoggedIn) {
+                const userEmail = sessionStorage.getItem('user_email');
+
+                // Popular e-mail nas caixas correspondentes
+                document.getElementById('sidebar-user-email').textContent = userEmail;
+
+                // Saudação personalizada
+                const emailPrefix = userEmail.split('@')[0];
+                const capitalizedPrefix = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+                document.getElementById('greeting-title').textContent = `Olá, ${capitalizedPrefix}!`;
+
+                // Ocultar login e exibir app
+                loginScreen.style.display = 'none';
+                appScreen.style.display = 'block';
+                if (window.innerWidth >= 992) {
+                    appScreen.style.display = 'flex';
+                }
+
+                // Preencher nome no input do certificado se já existir
+                const savedName = sessionStorage.getItem('user_name');
+                if (savedName) {
+                    document.getElementById('student-name-input').value = savedName;
+                }
+
+                // Restaurar progresso salvo
+                restoreProgress();
+
+            } else {
+                // Exibir login e ocultar app
+                loginScreen.style.display = 'flex';
+                appScreen.style.display = 'none';
+            }
+        }
+
+        // Marcar/Desmarcar checkboxes de progresso
+        async function toggleCheck(checkbox) {
+            const userEmail = sessionStorage.getItem('user_email');
+
+            // Disparar confetes azuis se marcar como Concluído
+            if (checkbox.checked) {
+                triggerBlueConfetti();
+            }
+
+            // Salvar progresso no Supabase
+            await saveProgress(userEmail);
+
+            // Calcular e atualizar progresso geral na tela
+            updateProgressPercentage();
+        }
+
+        // Salvar progresso no Supabase
+        async function saveProgress(email) {
+            const checkboxes = document.querySelectorAll('.deliverable-check');
+            const progressStates = Array.from(checkboxes).map(cb => cb.checked);
+
+            // Salvar no sessionStorage
+            sessionStorage.setItem('user_progress', JSON.stringify(progressStates));
+
+            try {
+                const { error } = await supabaseClient
+                    .from('alunos')
+                    .update({ progresso: progressStates })
+                    .eq('email', email);
+
+                if (error) throw error;
+            } catch (err) {
+                console.error("Erro ao salvar progresso no Supabase:", err);
+            }
+        }
+
+        // Restaurar progresso salvo da sessão
+        function restoreProgress() {
+            const progressData = sessionStorage.getItem('user_progress');
+            const checkboxes = document.querySelectorAll('.deliverable-check');
+
+            if (progressData) {
+                const progressStates = JSON.parse(progressData);
+                checkboxes.forEach((cb, index) => {
+                    cb.checked = !!progressStates[index];
+                });
+            } else {
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+
+            updateProgressPercentage();
+        }
+
+        // Calcular porcentagem de conclusão e atualizar UI
+        function updateProgressPercentage() {
+            const checkboxes = document.querySelectorAll('.deliverable-check');
+            const total = checkboxes.length;
+            let checkedCount = 0;
+
+            checkboxes.forEach(cb => {
+                if (cb.checked) checkedCount++;
+            });
+
+            const percentage = total > 0 ? Math.round((checkedCount / total) * 100) : 0;
+
+            // Elementos do Sidebar
+            document.getElementById('sidebar-progress-pct').textContent = `${percentage}%`;
+            document.getElementById('sidebar-progress-fill').style.width = `${percentage}%`;
+            document.getElementById('sidebar-progress-subtext').textContent = `${checkedCount} de ${total} concluídos`;
+
+            // Elementos do Header Mobile
+            document.getElementById('mobile-progress-pct').textContent = `${percentage}%`;
+            document.getElementById('mobile-progress-fill').style.width = `${percentage}%`;
+            document.getElementById('mobile-progress-subtext').textContent = `${checkedCount} de ${total} concluídos`;
+
+            // Controlar visibilidade do gerador de certificado
+            const lockedBox = document.getElementById('cert-box-locked');
+            const unlockedBox = document.getElementById('cert-box-unlocked');
+
+            if (checkedCount === total) {
+                lockedBox.style.display = 'none';
+                unlockedBox.style.display = 'block';
+            } else {
+                lockedBox.style.display = 'block';
+                unlockedBox.style.display = 'none';
+            }
+        }
+
+        // Efeito de Confetes Azuis
+        function triggerBlueConfetti() {
+            const blueColors = ['#0052FF', '#0033AA', '#38BDF8', '#FFFFFF'];
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.75 },
+                colors: blueColors
+            });
+        }
+
+        // Abertura do Modal de Geração do Certificado
+        async function generateCertificate() {
+            const nameInput = document.getElementById('student-name-input');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                alert('Por favor, insira o seu nome completo para colocar no certificado.');
+                nameInput.focus();
+                return;
+            }
+
+            const generateBtn = document.querySelector('.generate-btn');
+            const originalText = generateBtn.innerHTML;
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = 'Salvando certificado...';
+
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+            const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const certKey = `DL-300-${randomCode}`;
+            const fullVerificationText = `Chave de Autenticidade: ${certKey} | Emitido em: ${formattedDate} às ${formattedTime}`;
+
+            const email = sessionStorage.getItem('user_email');
+
+            try {
+                // Atualizar dados do certificado no Supabase
+                const { error } = await supabaseClient
+                    .from('alunos')
+                    .update({
+                        nome: name,
+                        chave_certificado: certKey,
+                        data_conclusao: now.toISOString()
+                    })
+                    .eq('email', email);
+
+                if (error) throw error;
+
+                // Atualizar sessionStorage
+                sessionStorage.setItem('user_name', name);
+                sessionStorage.setItem('cert_key', certKey);
+                sessionStorage.setItem('cert_date', now.toISOString());
+
+                // Exibir dados no certificado
+                document.getElementById('cert-display-name').textContent = name;
+                document.getElementById('cert-date-day').textContent = day;
+                document.getElementById('cert-date-month').textContent = month;
+                document.getElementById('cert-date-year').textContent = year;
+                document.getElementById('cert-display-hash').textContent = fullVerificationText;
+
+                // Abrir modal do certificado
+                const certModal = document.getElementById('cert-modal');
+                certModal.style.display = 'flex';
+            } catch (err) {
+                console.error("Erro ao gerar certificado no Supabase:", err);
+                alert('Erro de conexão ao salvar o certificado. Tente novamente.');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalText;
+            }
+        }
+
+        // Fechar Modal do Certificado
+        function closeCertModal() {
+            document.getElementById('cert-modal').style.display = 'none';
+        }
+
+        // Ação de Impressão (salvamento em PDF nativo)
+        function printCertificate() {
+            window.print();
+        }
+
+        // Adaptar exibição flex do container no resize (suporte a flex desktop)
+        window.addEventListener('resize', () => {
+            const isLoggedIn = sessionStorage.getItem('user_logged_in') === 'true';
+            const appScreen = document.getElementById('app-screen');
+            if (isLoggedIn) {
+                if (window.innerWidth >= 992) {
+                    appScreen.style.display = 'flex';
+                } else {
+                    appScreen.style.display = 'block';
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
