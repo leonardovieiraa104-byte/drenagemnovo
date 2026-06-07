@@ -19,10 +19,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ""
     )
 
-    const payload = await req.json()
+    let payload = {}
+    try {
+      payload = await req.json()
+    } catch (e) {
+      console.log("Corpo da requisição vazio ou não é JSON. Assumindo payload vazio.")
+    }
     console.log("Webhook recebido:", payload)
 
     const { event, customer } = payload
+
+    // Tratar eventos de teste ou de ping de forma amigável (garante aprovação nos testes da gateway)
+    if (!event || event === 'ping' || event.includes('test') || event === 'integration.test') {
+      return new Response(JSON.stringify({ message: "Ping recebido com sucesso. Webhook ativo!" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      })
+    }
 
     // Verificar se o pagamento do Pix foi confirmado
     if (event === 'pix.paid' || event === 'payment.paid') {
