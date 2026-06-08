@@ -49,11 +49,32 @@ serve(async (req) => {
         })
       }
 
+      // Detectar o plano comprado com base no valor pago
+      let plano = 'Completo'
+      const rawAmount = payload.data?.amount ?? 
+                        payload.payment?.amount ?? 
+                        payload.amount ?? 
+                        payload.data?.value ?? 
+                        payload.payment?.value ?? 
+                        payload.value
+      
+      console.log(`Valor recebido no webhook:`, rawAmount)
+      
+      if (rawAmount !== undefined && rawAmount !== null) {
+        const amountNum = Number(rawAmount)
+        // 1000 centavos ou R$ 10.00
+        if (amountNum === 1000 || amountNum === 10 || amountNum === 10.00) {
+          plano = 'Básico'
+        }
+      }
+      
+      console.log(`Plano identificado para ${email}:`, plano)
+
       // Realiza o upsert (insere novo ou atualiza se o e-mail já existir)
       const { data, error } = await supabaseClient
         .from('alunos')
         .upsert(
-          { email: email, nome: nome },
+          { email: email, nome: nome, plano: plano },
           { onConflict: 'email' }
         )
         .select()

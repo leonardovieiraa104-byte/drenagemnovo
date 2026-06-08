@@ -155,7 +155,7 @@
                 </div>
 
                 <!-- Card 2: Bônus 1 -->
-                <div class="deliverable-card">
+                <div class="deliverable-card" id="card-bonus-1">
                     <div class="card-banner">
                         <img src="https://i.ibb.co/zVTmNBzh/image.png" alt="Bônus 1">
                         <span class="card-tag">Bônus 1</span>
@@ -180,7 +180,7 @@
                 </div>
 
                 <!-- Card 3: Bônus 2 -->
-                <div class="deliverable-card">
+                <div class="deliverable-card" id="card-bonus-2">
                     <div class="card-banner">
                         <img src="https://i.ibb.co/jkg38zfj/image.png" alt="Bônus 2">
                         <span class="card-tag">Bônus 2</span>
@@ -205,7 +205,7 @@
                 </div>
 
                 <!-- Card 4: Bônus 3 -->
-                <div class="deliverable-card">
+                <div class="deliverable-card" id="card-bonus-3">
                     <div class="card-banner">
                         <img src="https://i.ibb.co/S4NfvBtS/image.png" alt="Bônus 3">
                         <span class="card-tag">Bônus 3</span>
@@ -231,7 +231,7 @@
             </div>
 
             <!-- Seção do Certificado -->
-            <div class="certificate-section-wrapper">
+            <div class="certificate-section-wrapper" id="certificate-section">
                 <!-- Estado LINDADO (Locked) -->
                 <div class="cert-card-box locked" id="cert-box-locked">
                     <div class="locked-overlay">
@@ -246,7 +246,8 @@
 
                 <!-- Estado DESBLOQUEADO (Unlocked) -->
                 <div class="cert-card-box unlocked" id="cert-box-unlocked" style="display: none;">
-                    <div class="unlocked-content" style="display: block;">
+                    <!-- Sub-estado: Gerar Certificado (Ainda sem nome salvo) -->
+                    <div class="unlocked-content" id="cert-unlocked-generate" style="display: block;">
                         <div class="unlocked-header">
                             <div class="unlocked-icon-wrapper">
                                 <i class="ph-fill ph-certificate"></i>
@@ -265,6 +266,29 @@
                             </div>
                             <button class="generate-btn" onclick="generateCertificate()">
                                 <i class="ph-bold ph-file-pdf"></i> Gerar Certificado Oficial
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sub-estado: Certificado Já Gerado (Nome já salvo) -->
+                    <div class="unlocked-content" id="cert-unlocked-view" style="display: none;">
+                        <div class="unlocked-header">
+                            <div class="unlocked-icon-wrapper">
+                                <i class="ph-fill ph-certificate"></i>
+                            </div>
+                            <div class="unlocked-text">
+                                <h3>Seu Certificado Oficial está Disponível! 🎓</h3>
+                                <p>O certificado foi gerado e salvo com o nome abaixo. Clique para visualizar e imprimir.</p>
+                            </div>
+                        </div>
+
+                        <div class="cert-form-box">
+                            <div class="cert-input-wrapper">
+                                <label>Nome do Aluno</label>
+                                <div class="cert-saved-name" id="cert-saved-name-text">Nome Salvo</div>
+                            </div>
+                            <button class="generate-btn" onclick="viewCertificate()">
+                                <i class="ph-bold ph-file-pdf"></i> Visualizar Certificado
                             </button>
                         </div>
                     </div>
@@ -364,6 +388,7 @@
                 sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false]));
                 sessionStorage.setItem('cert_key', data.chave_certificado || '');
                 sessionStorage.setItem('cert_date', data.data_conclusao || '');
+                sessionStorage.setItem('user_plan', data.plano || 'Completo');
 
                 // Atualizar e exibir dashboard
                 checkSessionState();
@@ -385,6 +410,7 @@
             sessionStorage.removeItem('user_progress');
             sessionStorage.removeItem('cert_key');
             sessionStorage.removeItem('cert_date');
+            sessionStorage.removeItem('user_plan');
 
             // Limpar formulário de login e resetar visual
             document.getElementById('login-email').value = '';
@@ -401,6 +427,7 @@
 
             if (isLoggedIn) {
                 const userEmail = sessionStorage.getItem('user_email');
+                const userPlan = sessionStorage.getItem('user_plan') || 'Completo';
 
                 // Popular e-mail nas caixas correspondentes
                 document.getElementById('sidebar-user-email').textContent = userEmail;
@@ -417,10 +444,24 @@
                     appScreen.style.display = 'flex';
                 }
 
+                // Controlar exibição dos bônus de acordo com o plano comprado
+                if (userPlan === 'Básico') {
+                    document.getElementById('card-bonus-1').style.display = 'none';
+                    document.getElementById('card-bonus-2').style.display = 'none';
+                    document.getElementById('card-bonus-3').style.display = 'none';
+                    document.getElementById('certificate-section').style.display = 'none';
+                } else {
+                    document.getElementById('card-bonus-1').style.display = 'flex';
+                    document.getElementById('card-bonus-2').style.display = 'flex';
+                    document.getElementById('card-bonus-3').style.display = 'flex';
+                    document.getElementById('certificate-section').style.display = 'block';
+                }
+
                 // Preencher nome no input do certificado se já existir
                 const savedName = sessionStorage.getItem('user_name');
                 if (savedName) {
-                    document.getElementById('student-name-input').value = savedName;
+                    const nameInput = document.getElementById('student-name-input');
+                    if (nameInput) nameInput.value = savedName;
                 }
 
                 // Restaurar progresso salvo
@@ -488,11 +529,19 @@
 
         // Calcular porcentagem de conclusão e atualizar UI
         function updateProgressPercentage() {
+            const isBasic = sessionStorage.getItem('user_plan') === 'Básico';
+            
             const checkboxes = document.querySelectorAll('.deliverable-check');
-            const total = checkboxes.length;
+            let activeCheckboxes = Array.from(checkboxes);
+            
+            if (isBasic) {
+                activeCheckboxes = activeCheckboxes.filter(cb => cb.getAttribute('data-index') === '0');
+            }
+
+            const total = activeCheckboxes.length;
             let checkedCount = 0;
 
-            checkboxes.forEach(cb => {
+            activeCheckboxes.forEach(cb => {
                 if (cb.checked) checkedCount++;
             });
 
@@ -511,13 +560,33 @@
             // Controlar visibilidade do gerador de certificado
             const lockedBox = document.getElementById('cert-box-locked');
             const unlockedBox = document.getElementById('cert-box-unlocked');
+            const certSection = document.getElementById('certificate-section');
 
-            if (checkedCount === total) {
+            if (isBasic) {
                 lockedBox.style.display = 'none';
-                unlockedBox.style.display = 'block';
-            } else {
-                lockedBox.style.display = 'block';
                 unlockedBox.style.display = 'none';
+                if (certSection) certSection.style.display = 'none';
+            } else {
+                if (certSection) certSection.style.display = 'block';
+                if (checkedCount === total) {
+                    lockedBox.style.display = 'none';
+                    unlockedBox.style.display = 'block';
+
+                    // Determinar se mostra o form de gerar ou o de visualizar
+                    const savedName = sessionStorage.getItem('user_name');
+                    const certKey = sessionStorage.getItem('cert_key');
+                    if (savedName && certKey) {
+                        document.getElementById('cert-unlocked-generate').style.display = 'none';
+                        document.getElementById('cert-unlocked-view').style.display = 'block';
+                        document.getElementById('cert-saved-name-text').textContent = savedName;
+                    } else {
+                        document.getElementById('cert-unlocked-generate').style.display = 'block';
+                        document.getElementById('cert-unlocked-view').style.display = 'none';
+                    }
+                } else {
+                    lockedBox.style.display = 'block';
+                    unlockedBox.style.display = 'none';
+                }
             }
         }
 
@@ -589,6 +658,9 @@
                 document.getElementById('cert-date-year').textContent = year;
                 document.getElementById('cert-display-hash').textContent = fullVerificationText;
 
+                // Atualizar o progresso para chavear imediatamente para visualização do certificado
+                updateProgressPercentage();
+
                 // Abrir modal do certificado
                 const certModal = document.getElementById('cert-modal');
                 certModal.style.display = 'flex';
@@ -599,6 +671,39 @@
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = originalText;
             }
+        }
+
+        // Visualizar o certificado existente
+        function viewCertificate() {
+            const name = sessionStorage.getItem('user_name');
+            const certKey = sessionStorage.getItem('cert_key');
+            const certDateStr = sessionStorage.getItem('cert_date');
+
+            if (!name || !certKey || !certDateStr) {
+                return;
+            }
+
+            const certDate = new Date(certDateStr);
+            const day = String(certDate.getDate()).padStart(2, '0');
+            const month = String(certDate.getMonth() + 1).padStart(2, '0');
+            const year = certDate.getFullYear();
+            const hours = String(certDate.getHours()).padStart(2, '0');
+            const minutes = String(certDate.getMinutes()).padStart(2, '0');
+            const seconds = String(certDate.getSeconds()).padStart(2, '0');
+            const formattedDate = `${day}/${month}/${year}`;
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+            const fullVerificationText = `Chave de Autenticidade: ${certKey} | Emitido em: ${formattedDate} às ${formattedTime}`;
+
+            document.getElementById('cert-display-name').textContent = name;
+            document.getElementById('cert-date-day').textContent = day;
+            document.getElementById('cert-date-month').textContent = month;
+            document.getElementById('cert-date-year').textContent = year;
+            document.getElementById('cert-display-hash').textContent = fullVerificationText;
+
+            // Abrir modal do certificado
+            const certModal = document.getElementById('cert-modal');
+            certModal.style.display = 'flex';
         }
 
         // Fechar Modal do Certificado
