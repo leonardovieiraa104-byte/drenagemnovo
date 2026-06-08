@@ -49,26 +49,83 @@ serve(async (req) => {
         })
       }
 
-      // Detectar o plano comprado com base no valor pago
-      let plano = 'Completo'
-      const rawAmount = payload.data?.amount ?? 
-                        payload.payment?.amount ?? 
-                        payload.amount ?? 
-                        payload.data?.value ?? 
-                        payload.payment?.value ?? 
-                        payload.value
-      
-      console.log(`Valor recebido no webhook:`, rawAmount)
-      
-      if (rawAmount !== undefined && rawAmount !== null) {
-        const amountNum = Number(rawAmount)
-        // 1000 centavos ou R$ 10.00
-        if (amountNum === 1000 || amountNum === 10 || amountNum === 10.00) {
-          plano = 'Básico'
+      // Detectar o plano comprado
+      let plano = 'Completo' // Fallback padrão
+      let planOrProductNames: string[] = []
+
+      // Coletar possíveis locais onde o nome do plano/produto/oferta pode vir
+      const possibleNamePaths = [
+        payload.payment?.product_name,
+        payload.product_name,
+        payload.data?.product_name,
+        payload.payment?.plan_name,
+        payload.plan_name,
+        payload.data?.plan_name,
+        payload.payment?.offer_name,
+        payload.offer_name,
+        payload.data?.offer_name,
+        payload.payment?.title,
+        payload.title,
+        payload.data?.title,
+        customer?.product_name
+      ]
+
+      possibleNamePaths.forEach(name => {
+        if (typeof name === 'string' && name.trim() !== '') {
+          planOrProductNames.push(name.toLowerCase())
+        }
+      })
+
+      // Verificar também se há itens na compra
+      const items = payload.payment?.items ?? payload.items ?? payload.data?.items
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          const itemName = item?.name ?? item?.title ?? item?.product_name
+          if (typeof itemName === 'string' && itemName.trim() !== '') {
+            planOrProductNames.push(itemName.toLowerCase())
+          }
+        })
+      }
+
+      console.log(`Nomes de planos/produtos encontrados no payload:`, planOrProductNames)
+
+      let foundBasicInName = false
+      let foundCompleteInName = false
+
+      planOrProductNames.forEach(name => {
+        if (name.includes('básico') || name.includes('basico')) {
+          foundBasicInName = true
+        }
+        if (name.includes('completo')) {
+          foundCompleteInName = true
+        }
+      })
+
+      if (foundBasicInName) {
+        plano = 'Básico'
+      } else if (foundCompleteInName) {
+        plano = 'Completo'
+      } else {
+        // Fallback para detecção por valor se não encontrar nenhuma palavra-chave nos nomes
+        const rawAmount = payload.data?.amount ?? 
+                          payload.payment?.amount ?? 
+                          payload.amount ?? 
+                          payload.data?.value ?? 
+                          payload.payment?.value ?? 
+                          payload.value
+        
+        console.log(`Fallback para detecção por valor (rawAmount):`, rawAmount)
+        
+        if (rawAmount !== undefined && rawAmount !== null) {
+          const amountNum = Number(rawAmount)
+          // 1000 centavos ou R$ 10.00
+          if (amountNum === 1000 || amountNum === 10 || amountNum === 10.00) {
+            plano = 'Básico'
+          }
         }
       }
       
-      console.log(`Plano identificado para ${email}:`, plano)
+      console.log(`Plano final identificado para ${email}:`, plano)
 
       // Realiza o upsert (insere novo ou atualiza se o e-mail já existir)
       const { data, error } = await supabaseClient
