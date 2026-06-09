@@ -692,9 +692,13 @@
             if (window.location.search) {
                 targetUrl += window.location.search;
             }
-            history.pushState(null, document.title, location.href);
-            window.addEventListener('popstate', function () {
-                window.location.replace(targetUrl);
+            // Push distinct states to ignore anchor/hash navigation in the same page
+            history.pushState({ step: 1 }, document.title, location.href);
+            history.pushState({ step: 2 }, document.title, location.href);
+            window.addEventListener('popstate', function (event) {
+                if (event.state && event.state.step === 1) {
+                    window.location.replace(targetUrl);
+                }
             });
         })();
     </script>
