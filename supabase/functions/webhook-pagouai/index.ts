@@ -89,6 +89,28 @@ serve(async (req) => {
 
       console.log(`Nomes de planos/produtos encontrados no payload:`, planOrProductNames)
 
+      // Verificar se a compra pertence a esta oferta (Drenagem Linfática)
+      let isDrenagem = false
+
+      const drenagemKeywords = ['drenagem', 'linfática', 'linfatica', 'técnicas', 'tecnicas', 'dl-300']
+
+      planOrProductNames.forEach(name => {
+        drenagemKeywords.forEach(kw => {
+          if (name.includes(kw)) isDrenagem = true
+        })
+      })
+
+      if (!isDrenagem) {
+        console.log(`Compra ignorada: Produto não pertence à oferta de Drenagem Linfática. Nomes encontrados:`, planOrProductNames)
+        return new Response(JSON.stringify({ 
+          message: "Evento ignorado (produto não pertence a Drenagem Linfática).",
+          detected_names: planOrProductNames 
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        })
+      }
+
       let foundBasicInName = false
       let foundCompleteInName = false
 
