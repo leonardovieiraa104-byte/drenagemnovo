@@ -685,6 +685,18 @@
                 }, 1000);
             });
         }
+
+        // Back Redirect (Downsell)
+        (function () {
+            let targetUrl = './oferta-especial/';
+            if (window.location.search) {
+                targetUrl += window.location.search;
+            }
+            history.pushState(null, document.title, location.href);
+            window.addEventListener('popstate', function () {
+                window.location.replace(targetUrl);
+            });
+        })();
     </script>
 
 </body>
