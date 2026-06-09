@@ -215,10 +215,8 @@ body {
     min-height: 100vh;
 }
 
-/* Layout Responsivo para Computadores/Notebooks */
 @media (min-width: 992px) {
     .app-container {
-        display: flex;
     }
 
     .sidebar {
