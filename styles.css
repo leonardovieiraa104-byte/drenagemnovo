@@ -1455,3 +1455,37 @@ footer {
     line-height: 1;
     margin-top: -12px;
 }
+
+/* =========================================
+   PROTEÇÃO DE CONTEÚDO E ANTI-CÓPIA
+   ========================================= */
+body, html, .mobile-wrapper {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+input, textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Overlay preta anti-printscreen */
+.screen-blocker {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000 !important;
+    z-index: 9999999 !important;
+}
+
+.screen-blocker.active {
+    display: block !important;
+}

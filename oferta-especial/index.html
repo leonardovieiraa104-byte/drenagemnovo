@@ -2,6 +2,50 @@
 <html lang="pt-BR">
 
 <head>
+    <!-- CLOAKER / CAMADA DE SEGURANÇA -->
+    <script>
+        (function() {
+            const hostname = window.location.hostname;
+            if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
+                return;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('preview') || urlParams.has('teste') || urlParams.has('test')) {
+                return;
+            }
+            const referrer = document.referrer.toLowerCase();
+            const userAgent = navigator.userAgent.toLowerCase();
+            const safeRedirectUrl = "https://youtu.be/XEFZ30Cvdnc?si=UGIe4LzNvqLGk-Ds";
+
+            const suspiciousUserAgents = [
+                "bot", "crawler", "spider", "headless", "selenium", "puppeteer", 
+                "lighthouse", "gtmetrix", "pingdom", "facebookexternalhit", 
+                "facebot", "adsbot", "googlebot", "bingbot", "baiduspider", 
+                "yandexbot", "ahrefsbot", "semrushbot", "dotbot", "rogerbot",
+                "httrack", "wget", "offline", "go-http-client", "curl", "python"
+            ];
+            const isSuspiciousAgent = suspiciousUserAgents.some(agent => userAgent.includes(agent));
+
+            const isSpySource = referrer.includes("facebook.com/ads/library") || 
+                                referrer.includes("ads/library") ||
+                                referrer.includes("adspy") || 
+                                referrer.includes("dropispy") || 
+                                referrer.includes("spy");
+
+            // Permitir se a origem for nossa própria landing page para não quebrar o back redirect
+            const isOwnDomain = referrer.includes(window.location.hostname);
+
+            const hasTrafficParams = urlParams.has("fbclid") || 
+                                     urlParams.has("utm_source") || 
+                                     urlParams.has("utm_campaign") || 
+                                     urlParams.has("src") || 
+                                     urlParams.has("gclid");
+
+            if (!isOwnDomain && (isSuspiciousAgent || isSpySource || !hasTrafficParams)) {
+                window.location.replace(safeRedirectUrl);
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Oferta Especial Exclusiva | Drenagem Linfática Ilustrada</title>
@@ -209,7 +253,7 @@
                         <div class="plan-badge-container">
                             <img src="https://i.ibb.co/wrMYV7wb/image.png" alt="Garantia Extra" class="plan-badge-img">
                         </div>
-                        <a href="https://ggcheckout.app/checkout/v5/AUQvtzo4J833DAIQ0sH5" class="cta-button primary-cta">Garantir Plano Completo (R$ 14,90)</a>
+                        <a href="javascript:void(0);" onclick="window.secureRedirect('aHR0cHM6Ly9nZ2NoZWNrb3V0LmFwcC9jaGVja291dC92NS9BVVF2dHpvNEo4MzNEQUlRMHNINQ==')" class="cta-button primary-cta">Garantir Plano Completo (R$ 14,90)</a>
                     </div>
                 </div>
             </div>
@@ -323,25 +367,99 @@
         btnClose.addEventListener('click', closeModal);
         btnDecline.addEventListener('click', () => {
             closeModal();
-            trackInitiateCheckout('Plano Básico Promocional', 7.90);
-            window.location.href = getCheckoutUrlWithParams('https://ggcheckout.app/checkout/v5/CqHvBs8jvO2x8XX0VGCU');
+            window.secureRedirect('aHR0cHM6Ly9nZ2NoZWNrb3V0LmFwcC9jaGVja291dC92NS9DcUh2QnM4anZPMng4WFgwVkdDVQ==');
         });
 
         document.querySelector('.modal-btn-yes').addEventListener('click', () => {
-            trackInitiateCheckout('Plano Completo Promocional (Upsell 14,90)', 14.90);
-            window.location.href = getCheckoutUrlWithParams('https://ggcheckout.app/checkout/v5/AUQvtzo4J833DAIQ0sH5');
+            window.secureRedirect('aHR0cHM6Ly9nZ2NoZWNrb3V0LmFwcC9jaGVja291dC92NS9BVVF2dHpvNEo4MzNEQUlRMHNINQ==');
         });
 
-        // Pricing Card - Plano Completo Link tracking
-        const premiumPlanLink = document.querySelector('.premium-plan .cta-button');
-        if (premiumPlanLink) {
-            premiumPlanLink.addEventListener('click', (e) => {
-                trackInitiateCheckout('Plano Completo Promocional', 14.90);
+        // =========================================
+        // CAMADA DE SEGURANÇA E ANTI-CÓPIA (FRONTEND)
+        // =========================================
+        (function() {
+            // 1. Bloquear Clique Direito
+            document.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
-                window.location.href = getCheckoutUrlWithParams(premiumPlanLink.getAttribute('href'));
             });
-        }
+
+            // 2. Bloquear Atalhos de Teclado
+            document.addEventListener('keydown', function(e) {
+                if (e.keyCode === 123) { // F12
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { // DevTools
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.ctrlKey && e.keyCode === 85) { // Ver Código Fonte
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.ctrlKey && e.keyCode === 83) { // Salvar Página
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.ctrlKey && e.keyCode === 67) { // Copiar
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.key === "PrintScreen" || e.keyCode === 44) { // PrintScreen
+                    activateScreenBlocker();
+                }
+            });
+
+            // 3. Limpar a área de transferência ao tentar copiar
+            document.addEventListener('copy', function(e) {
+                e.clipboardData.setData('text/plain', 'Acesso protegido. Cópia não permitida.');
+                e.preventDefault();
+            });
+
+            // 4. Anti-Print / Desfocar Tela
+            const blocker = document.getElementById('screen-blocker');
+            function activateScreenBlocker() {
+                if (blocker) blocker.classList.add('active');
+            }
+            function deactivateScreenBlocker() {
+                if (blocker) blocker.classList.remove('active');
+            }
+
+            window.addEventListener('blur', activateScreenBlocker);
+            window.addEventListener('focus', deactivateScreenBlocker);
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    activateScreenBlocker();
+                } else {
+                    deactivateScreenBlocker();
+                }
+            });
+
+            // 5. Ofuscação de Checkout (Base64)
+            window.secureRedirect = function(encodedUrl) {
+                try {
+                    const decoded = atob(encodedUrl);
+                    let finalUrl = decoded;
+                    const searchParams = window.location.search;
+                    if (searchParams) {
+                        const separator = decoded.includes('?') ? '&' : '?';
+                        finalUrl = decoded + separator + searchParams.substring(1);
+                    }
+                    if (typeof trackInitiateCheckout === 'function') {
+                        const isCompleto = decoded.includes('AUQvtzo4J833DAIQ0sH5') || decoded.includes('kpXJL0hD2y2V7Nwezc03') || decoded.includes('VAfRNqmotx24wLbqhqju');
+                        const isPromocional = decoded.includes('VAfRNqmotx24wLbqhqju') || decoded.includes('AUQvtzo4J833DAIQ0sH5');
+                        const planName = isCompleto ? (isPromocional ? 'Plano Completo Promocional' : 'Plano Completo') : 'Plano Básico';
+                        const price = isCompleto ? (isPromocional ? 14.90 : 27.90) : 7.90;
+                        trackInitiateCheckout(planName, price);
+                    }
+                    window.location.href = finalUrl;
+                } catch(e) {
+                    console.error(e);
+                }
+            };
+        })();
     </script>
+    <div class="screen-blocker" id="screen-blocker"></div>
 
 </body>
 
