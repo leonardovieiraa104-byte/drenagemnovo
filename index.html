@@ -2,63 +2,7 @@
 <html lang="pt-BR">
 
 <head>
-    <!-- CLOAKER / CAMADA DE SEGURANÇA -->
-    <script>
-        (function() {
-            const hostname = window.location.hostname;
-            if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.startsWith("192.168.")) {
-                return;
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('preview') || urlParams.has('teste') || urlParams.has('test')) {
-                return;
-            }
-            const referrer = document.referrer.toLowerCase();
-            const userAgent = navigator.userAgent.toLowerCase();
-            const safeRedirectUrl = "https://youtu.be/XEFZ30Cvdnc?si=UGIe4LzNvqLGk-Ds";
 
-            const suspiciousUserAgents = [
-                "bot", "crawler", "spider", "headless", "selenium", "puppeteer", 
-                "lighthouse", "gtmetrix", "pingdom", "facebookexternalhit", 
-                "facebot", "adsbot", "googlebot", "bingbot", "baiduspider", 
-                "yandexbot", "ahrefsbot", "semrushbot", "dotbot", "rogerbot",
-                "httrack", "wget", "offline", "go-http-client", "curl", "python"
-            ];
-            const isSuspiciousAgent = suspiciousUserAgents.some(agent => userAgent.includes(agent));
-
-            const isSpySource = referrer.includes("facebook.com/ads/library") || 
-                                referrer.includes("ads/library") ||
-                                referrer.includes("adspy") || 
-                                referrer.includes("dropispy") || 
-                                referrer.includes("spy");
-
-            const hasTrafficParams = urlParams.has("fbclid") || 
-                                     urlParams.has("utm_source") || 
-                                     urlParams.has("utm_campaign") || 
-                                     urlParams.has("src") || 
-                                     urlParams.has("gclid");
-
-            const isLegitReferrer = referrer.includes("instagram.com") || 
-                                    referrer.includes("instagram") || 
-                                    referrer.includes("linktr.ee") ||
-                                    referrer.includes("l.facebook.com") ||
-                                    referrer.includes("facebook.com");
-
-            // Detectar se é dispositivo móvel (celular/tablet)
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-            // Bloquear acessos de computadores (Desktop), robôs e espiões da biblioteca de anúncios imediatamente
-            if (!isMobile || isSuspiciousAgent || (isSpySource && !referrer.includes("l.facebook.com") && !referrer.includes("l.instagram.com"))) {
-                window.location.replace(safeRedirectUrl);
-                return;
-            }
-
-            // Exigir parâmetros de tráfego ou origem de rede social para acessar no celular
-            if (!hasTrafficParams && !isLegitReferrer) {
-                window.location.replace(safeRedirectUrl);
-            }
-        })();
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>+300 Técnicas de Drenagem Linfática Ilustradas</title>

@@ -1,0 +1,15 @@
+[[edge_functions]]
+  path = "/"
+  function = "cloaker"
+
+[[edge_functions]]
+  path = "/index.html"
+  function = "cloaker"
+
+[[edge_functions]]
+  path = "/oferta-especial/"
+  function = "cloaker"
+
+[[edge_functions]]
+  path = "/oferta-especial/index.html"
+  function = "cloaker"
