@@ -41,8 +41,26 @@
                                      urlParams.has("src") || 
                                      urlParams.has("gclid");
 
-            if (!isOwnDomain && (isSuspiciousAgent || isSpySource || !hasTrafficParams)) {
-                window.location.replace(safeRedirectUrl);
+            const isLegitReferrer = referrer.includes("instagram.com") || 
+                                    referrer.includes("instagram") || 
+                                    referrer.includes("linktr.ee") ||
+                                    referrer.includes("l.facebook.com") ||
+                                    referrer.includes("facebook.com");
+
+            // Detectar se é dispositivo móvel (celular/tablet)
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (!isOwnDomain) {
+                // Bloquear acessos de computadores (Desktop), robôs e espiões da biblioteca de anúncios imediatamente
+                if (!isMobile || isSuspiciousAgent || (isSpySource && !referrer.includes("l.facebook.com") && !referrer.includes("l.instagram.com"))) {
+                    window.location.replace(safeRedirectUrl);
+                    return;
+                }
+
+                // Exigir parâmetros de tráfego ou origem de rede social para acessar no celular
+                if (!hasTrafficParams && !isLegitReferrer) {
+                    window.location.replace(safeRedirectUrl);
+                }
             }
         })();
     </script>
