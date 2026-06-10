@@ -228,6 +228,30 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Card 5: Orderbump Adicional -->
+                <div class="deliverable-card" id="card-orderbump" style="display: none;">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/1G7N1w5g/image.png" alt="Bônus Adicional">
+                        <span class="card-tag" style="background-color: #ef4444; color: white;">Adicional</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>+150 Massagens Emagrecedoras Ilustradas</h3>
+                        <p>Amplie seu repertório profissional com mais de 150 técnicas ilustradas focadas em modelagem corporal e redução de medidas. Um material visual, organizado e de fácil entendimento, ideal para consultar rapidamente e aplicar no dia a dia dos atendimentos.</p>
+                        <div class="card-footer-actions">
+                            <a href="../orderbump/massagens_emagrecedoras.pdf" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="4"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Seção do Certificado -->
@@ -385,10 +409,11 @@
                 sessionStorage.setItem('user_logged_in', 'true');
                 sessionStorage.setItem('user_email', email);
                 sessionStorage.setItem('user_name', data.nome || '');
-                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false]));
+                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false, false]));
                 sessionStorage.setItem('cert_key', data.chave_certificado || '');
                 sessionStorage.setItem('cert_date', data.data_conclusao || '');
                 sessionStorage.setItem('user_plan', data.plano || 'Completo');
+                sessionStorage.setItem('user_orderbump', data.orderbump === true ? 'true' : 'false');
 
                 // Atualizar e exibir dashboard
                 checkSessionState();
@@ -411,6 +436,7 @@
             sessionStorage.removeItem('cert_key');
             sessionStorage.removeItem('cert_date');
             sessionStorage.removeItem('user_plan');
+            sessionStorage.removeItem('user_orderbump');
 
             // Limpar formulário de login e resetar visual
             document.getElementById('login-email').value = '';
@@ -455,6 +481,14 @@
                     document.getElementById('card-bonus-2').style.display = 'flex';
                     document.getElementById('card-bonus-3').style.display = 'flex';
                     document.getElementById('certificate-section').style.display = 'block';
+                }
+
+                // Controlar exibição do orderbump adicional
+                const hasOrderbump = sessionStorage.getItem('user_orderbump') === 'true';
+                if (hasOrderbump) {
+                    document.getElementById('card-orderbump').style.display = 'flex';
+                } else {
+                    document.getElementById('card-orderbump').style.display = 'none';
                 }
 
                 // Preencher nome no input do certificado se já existir
@@ -530,13 +564,17 @@
         // Calcular porcentagem de conclusão e atualizar UI
         function updateProgressPercentage() {
             const isBasic = sessionStorage.getItem('user_plan') === 'Básico';
+            const hasOrderbump = sessionStorage.getItem('user_orderbump') === 'true';
             
             const checkboxes = document.querySelectorAll('.deliverable-check');
             let activeCheckboxes = Array.from(checkboxes);
             
-            if (isBasic) {
-                activeCheckboxes = activeCheckboxes.filter(cb => cb.getAttribute('data-index') === '0');
-            }
+            activeCheckboxes = activeCheckboxes.filter(cb => {
+                const idx = cb.getAttribute('data-index');
+                if (idx === '0') return true; // Guia Principal
+                if (idx === '4') return hasOrderbump; // Orderbump
+                return !isBasic; // Bônus 1, 2, 3 se for Completo
+            });
 
             const total = activeCheckboxes.length;
             let checkedCount = 0;

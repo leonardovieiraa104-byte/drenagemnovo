@@ -89,10 +89,10 @@ serve(async (req) => {
 
       console.log(`Nomes de planos/produtos encontrados no payload:`, planOrProductNames)
 
-      // Verificar se a compra pertence a esta oferta (Drenagem Linfática)
+      // Verificar se a compra pertence a esta oferta (Drenagem Linfática ou Massagens Emagrecedoras)
       let isDrenagem = false
 
-      const drenagemKeywords = ['drenagem', 'linfática', 'linfatica', 'técnicas', 'tecnicas', 'dl-300']
+      const drenagemKeywords = ['drenagem', 'linfática', 'linfatica', 'técnicas', 'tecnicas', 'dl-300', 'massagens', 'emagrecedoras']
 
       planOrProductNames.forEach(name => {
         drenagemKeywords.forEach(kw => {
@@ -101,7 +101,7 @@ serve(async (req) => {
       })
 
       if (!isDrenagem) {
-        console.log(`Compra ignorada: Produto não pertence à oferta de Drenagem Linfática. Nomes encontrados:`, planOrProductNames)
+        console.log(`Compra ignorada: Produto não pertence à oferta de Drenagem Linfática ou Massagens. Nomes encontrados:`, planOrProductNames)
         return new Response(JSON.stringify({ 
           message: "Evento ignorado (produto não pertence a Drenagem Linfática).",
           detected_names: planOrProductNames 
@@ -111,6 +111,27 @@ serve(async (req) => {
         })
       }
 
+      // 1. Verificar se o aluno já existe
+      const { data: alunoExistente, error: findError } = await supabaseClient
+        .from('alunos')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle()
+
+      if (findError) {
+        console.error("Erro ao buscar aluno existente:", findError)
+      }
+
+      // 2. Identificar se comprou o orderbump (+150 Massagens Emagrecedoras Ilustradas)
+      let comprouOrderbump = false
+      planOrProductNames.forEach(name => {
+        if (name.includes('massagens') || name.includes('emagrecedoras')) {
+          comprouOrderbump = true
+        }
+      })
+
+      // 3. Determinar o plano comprado (apenas se veio no payload)
+      let planoIdentificado: string | null = null
       let foundBasicInName = false
       let foundCompleteInName = false
 
@@ -124,11 +145,11 @@ serve(async (req) => {
       })
 
       if (foundBasicInName) {
-        plano = 'Básico'
+        planoIdentificado = 'Básico'
       } else if (foundCompleteInName) {
-        plano = 'Completo'
+        planoIdentificado = 'Completo'
       } else {
-        // Fallback para detecção por valor se não encontrar nenhuma palavra-chave nos nomes
+        // Fallback por valor da transação caso a gateway envie valores padronizados
         const rawAmount = payload.data?.amount ?? 
                           payload.payment?.amount ?? 
                           payload.amount ?? 
@@ -136,44 +157,93 @@ serve(async (req) => {
                           payload.payment?.value ?? 
                           payload.value
         
-        console.log(`Fallback para detecção por valor (rawAmount):`, rawAmount)
-        
         if (rawAmount !== undefined && rawAmount !== null) {
           const amountNum = Number(rawAmount)
-          // 1000 centavos ou R$ 10.00
           if (amountNum === 1000 || amountNum === 10 || amountNum === 10.00) {
-            plano = 'Básico'
+            planoIdentificado = 'Básico'
+          } else if (amountNum === 2790 || amountNum === 27.90 || amountNum === 1490 || amountNum === 14.90) {
+            planoIdentificado = 'Completo'
           }
         }
       }
-      
-      console.log(`Plano final identificado para ${email}:`, plano)
 
-      // Realiza o upsert (insere novo ou atualiza se o e-mail já existir)
-      const { data, error } = await supabaseClient
-        .from('alunos')
-        .upsert(
-          { email: email, nome: nome, plano: plano },
-          { onConflict: 'email' }
-        )
-        .select()
+      let dataFinal: any = null
+      let dbError: any = null
 
-      if (error) {
-        console.error("Erro ao salvar aluno no banco:", error)
-        return new Response(JSON.stringify({ error: "Erro ao salvar no banco de dados.", details: error }), {
+      if (alunoExistente) {
+        // Aluno já existe: atualiza apenas os campos necessários (preserva o plano caso seja compra avulsa do orderbump)
+        const updatePayload: any = {}
+        if (nome) updatePayload.nome = nome
+        if (planoIdentificado) updatePayload.plano = planoIdentificado
+        if (comprouOrderbump) updatePayload.orderbump = true
+
+        console.log(`Aluno já existe. Atualizando dados:`, updatePayload)
+
+        const { data, error } = await supabaseClient
+          .from('alunos')
+          .update(updatePayload)
+          .eq('email', email)
+          .select()
+
+        dataFinal = data
+        dbError = error
+      } else {
+        // Aluno novo: insere registro completo
+        const insertPayload = {
+          email: email,
+          nome: nome,
+          plano: planoIdentificado ?? 'Completo', // fallback Completo se não identificado
+          orderbump: comprouOrderbump
+        }
+
+        console.log(`Aluno novo. Criando registro:`, insertPayload)
+
+        const { data, error } = await supabaseClient
+          .from('alunos')
+          .insert(insertPayload)
+          .select()
+
+        dataFinal = data
+        dbError = error
+      }
+
+      if (dbError) {
+        console.error("Erro ao salvar aluno no banco:", dbError)
+        return new Response(JSON.stringify({ error: "Erro ao salvar no banco de dados.", details: dbError }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         })
       }
 
-      console.log(`Aluno ${email} cadastrado/atualizado na tabela pública com sucesso!`, data)
+      console.log(`Aluno ${email} cadastrado/atualizado na tabela pública com sucesso!`, dataFinal)
 
-      // O link de acesso à área de membros é direto (sem autenticação de convite com senha via Supabase Auth)
+      // O link de acesso à área de membros é direto
       const siteUrl = "https://drenagemlinfatica.netlify.app/area-de-membros/"
+
+      // Determinar assunto e template do e-mail de acordo com a compra
+      let subject = "Seu acesso à Área de Membros está liberado! 🎓"
+      let emailHtml = ""
+      const planoFinal = planoIdentificado ?? (alunoExistente?.plano ?? 'Completo')
+
+      if (alunoExistente) {
+        if (comprouOrderbump) {
+          subject = "Seu Orderbump foi liberado na Área de Membros! 🎓"
+          emailHtml = getOrderbumpOnlyEmailHtml(nome || alunoExistente.nome, siteUrl)
+        } else {
+          subject = "Seu acesso à Área de Membros foi atualizado! 🎓"
+          emailHtml = getEmailHtml(nome || alunoExistente.nome, siteUrl, planoFinal, false)
+        }
+      } else {
+        if (comprouOrderbump) {
+          subject = "Seu acesso está liberado + Orderbump incluso! 🎓"
+          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, true)
+        } else {
+          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, false)
+        }
+      }
 
       // Disparar o e-mail personalizado usando a API do Resend
       const resendToken = "re_3jsNvZDB_C8nZfu62qGF2NmJ9S1BqsgRN"
-      const emailHtml = getEmailHtml(nome, siteUrl)
 
       try {
         const resendResponse = await fetch("https://api.resend.com/emails", {
@@ -185,7 +255,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "Drenagem Linfática <acesso@drenagemlinfatica.hyzencompra.shop>",
             to: [email],
-            subject: "Seu acesso à Área de Membros está liberado! 🎓",
+            subject: subject,
             html: emailHtml
           })
         })
@@ -197,7 +267,7 @@ serve(async (req) => {
         console.error("Erro ao enviar e-mail via Resend:", emailErr)
       }
 
-      return new Response(JSON.stringify({ message: "Aluno cadastrado e e-mail disparado via Resend!", data }), {
+      return new Response(JSON.stringify({ message: "Aluno cadastrado e e-mail disparado!", data: dataFinal }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
@@ -217,7 +287,16 @@ serve(async (req) => {
   }
 })
 
-function getEmailHtml(name: string, actionLink: string) {
+function getEmailHtml(name: string, actionLink: string, plano: string, comOrderbump: boolean) {
+  const orderbumpText = comOrderbump 
+    ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+         <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
+           <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
+           O seu bônus adicional <strong>+150 Massagens Emagrecedoras Ilustradas</strong> também já está disponível na sua conta!
+         </p>
+       </div>`
+    : "";
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -337,8 +416,10 @@ function getEmailHtml(name: string, actionLink: string) {
         <td class="content">
           <h2>Seu acesso foi liberado! 🎉</h2>
           <p>Olá, <strong>${name || 'Aluno(a)'}</strong>,</p>
-          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas</strong>! Seu acesso exclusivo à nossa área de membros privada já está liberado.</p>
+          <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas (${plano})</strong>! Seu acesso exclusivo à nossa área de membros privada já está liberado.</p>
           
+          ${orderbumpText}
+
           <!-- Box Informativo de Alerta (Login Sem Senha) -->
           <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
             <p style="margin: 0; font-size: 15px; color: #991b1b; line-height: 1.5; font-weight: 500;">
@@ -372,3 +453,162 @@ function getEmailHtml(name: string, actionLink: string) {
 </body>
 </html>`
 }
+
+function getOrderbumpOnlyEmailHtml(name: string, actionLink: string) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Material Adicional Liberado | Drenagem Linfática Ilustrada</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #334155;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #f8fafc;
+      padding-bottom: 40px;
+      padding-top: 40px;
+    }
+    .main-table {
+      background-color: #ffffff;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+      border-spacing: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.03);
+      border: 1px solid #e2e8f0;
+    }
+    .header {
+      background: linear-gradient(135deg, #0052FF 0%, #0033AA 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .header-logo {
+      font-size: 50px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .header h1 {
+      color: #ffffff;
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .content {
+      padding: 40px 30px;
+      background-color: #ffffff;
+    }
+    .content h2 {
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 25px;
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 35px;
+    }
+    .cta-button {
+      background-color: #0052FF;
+      color: #ffffff !important;
+      display: inline-block;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 82, 255, 0.25);
+    }
+    .footer {
+      background-color: #f1f5f9;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+    .footer p {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+    }
+    .footer a {
+      color: #0052FF;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-table" align="center">
+      <!-- HEADER -->
+      <tr>
+        <td class="header">
+          <div class="header-logo">🎓</div>
+          <h1>Área de Membros</h1>
+        </td>
+      </tr>
+      
+      <!-- CONTENT -->
+      <tr>
+        <td class="content">
+          <h2>Seu material adicional foi liberado! 🎉</h2>
+          <p>Olá, <strong>${name || 'Aluno(a)'}</strong>,</p>
+          <p>Parabéns pela aquisição do bônus adicional <strong>+150 Massagens Emagrecedoras Ilustradas</strong>! Ele já foi liberado e adicionado à sua Área de Membros.</p>
+          
+          <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+            <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
+              <strong>🎓 MATERIAL ADICIONAL PRONTO</strong><br>
+              Você já pode acessar a Área de Membros e fazer o download do PDF completo das Massagens Emagrecedoras.
+            </p>
+          </div>
+
+          <!-- Box Informativo de Alerta (Login Sem Senha) -->
+          <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+            <p style="margin: 0; font-size: 15px; color: #991b1b; line-height: 1.5; font-weight: 500;">
+              <strong>⚠️ LEMBRETE: LOGIN SEM SENHA</strong><br>
+              Para fazer o login, informe <strong>APENAS o seu e-mail de compra</strong> na tela de acesso.
+            </p>
+          </div>
+
+          <p>Clique no botão abaixo para entrar no seu painel:</p>
+          
+          <div class="button-container">
+            <a href="${actionLink}" class="cta-button" style="color: #ffffff;">Acessar Área de Membros</a>
+          </div>
+        </td>
+      </tr>
+      
+      <!-- FOOTER -->
+      <tr>
+        <td class="footer">
+          <p>Você recebeu este e-mail porque realizou a compra do material digital de Drenagem Linfática.</p>
+          <p>&copy; 2026 Guia de Drenagem Linfática. Todos os direitos reservados.</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`
+}
+
