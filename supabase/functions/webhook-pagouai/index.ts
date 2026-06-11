@@ -27,20 +27,46 @@ serve(async (req) => {
     }
     console.log("Webhook recebido:", payload)
 
-    const { event, customer } = payload
+    // Logar webhook bruto no banco de dados para depuração
+    try {
+      await supabaseClient
+        .from('webhook_logs')
+        .insert({ payload: payload })
+    } catch (logErr) {
+      console.error("Erro ao salvar log do webhook:", logErr)
+    }
+
+    const eventType = (payload.event || payload.data?.event_type || "")
+    const paymentStatus = (payload.payment?.status || payload.data?.status || payload.status || "")
+
+    const isTestEvent = !eventType || eventType === 'ping' || eventType.includes('test') || eventType === 'integration.test';
 
     // Tratar eventos de teste ou de ping de forma amigável (garante aprovação nos testes da gateway)
-    if (!event || event === 'ping' || event.includes('test') || event === 'integration.test') {
+    if (isTestEvent) {
       return new Response(JSON.stringify({ message: "Ping recebido com sucesso. Webhook ativo!" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       })
     }
 
-    // Verificar se o pagamento do Pix foi confirmado
-    if (event === 'pix.paid' || event === 'payment.paid') {
-      const email = customer?.email?.trim().toLowerCase()
-      const nome = customer?.name?.trim()
+    const isPaid = (
+      eventType === 'pix.paid' ||
+      eventType === 'card.paid' ||
+      eventType === 'payment.paid' ||
+      eventType === 'transaction.paid' ||
+      eventType === 'payment.approved' ||
+      eventType === 'transaction.approved' ||
+      eventType.endsWith('.paid') ||
+      eventType.endsWith('.approved') ||
+      paymentStatus === 'paid' ||
+      paymentStatus === 'approved'
+    );
+
+    // Verificar se o pagamento foi confirmado
+    if (isPaid) {
+      const customerObj = payload.customer ?? payload.data?.customer ?? payload.payment?.customer ?? payload.data?.client ?? payload.client
+      const email = customerObj?.email?.trim().toLowerCase()
+      const nome = customerObj?.name?.trim() ?? customerObj?.nome?.trim()
 
       if (!email) {
         return new Response(JSON.stringify({ error: "Email do cliente não fornecido no payload." }), {
@@ -67,7 +93,11 @@ serve(async (req) => {
         payload.payment?.title,
         payload.title,
         payload.data?.title,
-        customer?.product_name
+        customerObj?.product_name,
+        payload.product?.title,
+        payload.product?.name,
+        payload.payment?.product?.title,
+        payload.payment?.product?.name
       ]
 
       possibleNamePaths.forEach(name => {
@@ -77,10 +107,10 @@ serve(async (req) => {
       })
 
       // Verificar também se há itens na compra
-      const items = payload.payment?.items ?? payload.items ?? payload.data?.items
+      const items = payload.payment?.items ?? payload.items ?? payload.data?.items ?? payload.products ?? payload.payment?.products
       if (Array.isArray(items)) {
         items.forEach(item => {
-          const itemName = item?.name ?? item?.title ?? item?.product_name
+          const itemName = item?.name ?? item?.title ?? item?.product_name ?? item?.product?.name ?? item?.product?.title
           if (typeof itemName === 'string' && itemName.trim() !== '') {
             planOrProductNames.push(itemName.toLowerCase())
           }
@@ -122,11 +152,15 @@ serve(async (req) => {
         console.error("Erro ao buscar aluno existente:", findError)
       }
 
-      // 2. Identificar se comprou o orderbump (+150 Massagens Emagrecedoras Ilustradas)
+      // 2. Identificar se comprou os adicionais (orderbumps)
       let comprouOrderbump = false
+      let comprouPack2in1 = false
       planOrProductNames.forEach(name => {
         if (name.includes('massagens') || name.includes('emagrecedoras')) {
           comprouOrderbump = true
+        }
+        if (name.includes('esculpimento') || name.includes('relaxamento') || name.includes('pack 2 em 1') || name.includes('pack_2em1') || name.includes('pack')) {
+          comprouPack2in1 = true
         }
       })
 
@@ -176,6 +210,7 @@ serve(async (req) => {
         if (nome) updatePayload.nome = nome
         if (planoIdentificado) updatePayload.plano = planoIdentificado
         if (comprouOrderbump) updatePayload.orderbump = true
+        if (comprouPack2in1) updatePayload.orderbump_pack2in1 = true
 
         console.log(`Aluno já existe. Atualizando dados:`, updatePayload)
 
@@ -193,7 +228,8 @@ serve(async (req) => {
           email: email,
           nome: nome,
           plano: planoIdentificado ?? 'Completo', // fallback Completo se não identificado
-          orderbump: comprouOrderbump
+          orderbump: comprouOrderbump,
+          orderbump_pack2in1: comprouPack2in1
         }
 
         console.log(`Aluno novo. Criando registro:`, insertPayload)
@@ -224,21 +260,19 @@ serve(async (req) => {
       let subject = "Seu acesso à Área de Membros está liberado! 🎓"
       let emailHtml = ""
       const planoFinal = planoIdentificado ?? (alunoExistente?.plano ?? 'Completo')
+      
+      const finalComOrderbump = comprouOrderbump || (alunoExistente?.orderbump ?? false)
+      const finalComPack2in1 = comprouPack2in1 || (alunoExistente?.orderbump_pack2in1 ?? false)
 
-      if (alunoExistente) {
-        if (comprouOrderbump) {
-          subject = "Seu Orderbump foi liberado na Área de Membros! 🎓"
-          emailHtml = getOrderbumpOnlyEmailHtml(nome || alunoExistente.nome, siteUrl)
-        } else {
-          subject = "Seu acesso à Área de Membros foi atualizado! 🎓"
-          emailHtml = getEmailHtml(nome || alunoExistente.nome, siteUrl, planoFinal, false)
-        }
+      if (comprouOrderbump || comprouPack2in1) {
+        subject = "Seu acesso está liberado + Material adicional incluso! 🎓"
+        emailHtml = getEmailHtml(nome || (alunoExistente?.nome ?? ""), siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
       } else {
-        if (comprouOrderbump) {
-          subject = "Seu acesso está liberado + Orderbump incluso! 🎓"
-          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, true)
+        if (alunoExistente) {
+          subject = "Seu acesso à Área de Membros foi atualizado! 🎓"
+          emailHtml = getEmailHtml(nome || alunoExistente.nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
         } else {
-          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, false)
+          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
         }
       }
 
@@ -287,12 +321,21 @@ serve(async (req) => {
   }
 })
 
-function getEmailHtml(name: string, actionLink: string, plano: string, comOrderbump: boolean) {
+function getEmailHtml(name: string, actionLink: string, plano: string, comOrderbump: boolean, comPack2in1: boolean) {
   const orderbumpText = comOrderbump 
     ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
            <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
            O seu bônus adicional <strong>+150 Massagens Emagrecedoras Ilustradas</strong> também já está disponível na sua conta!
+         </p>
+       </div>`
+    : "";
+
+  const pack2in1Text = comPack2in1 
+    ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+         <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
+           <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
+           O seu bônus adicional <strong>Pack 2 em 1: Esculpimento + Relaxamento Corporal Prático</strong> também já está disponível na sua conta!
          </p>
        </div>`
     : "";
@@ -419,6 +462,7 @@ function getEmailHtml(name: string, actionLink: string, plano: string, comOrderb
           <p>Parabéns pela aquisição do <strong>Guia +300 Técnicas de Drenagem Linfática Ilustradas (${plano})</strong>! Seu acesso exclusivo à nossa área de membros privada já está liberado.</p>
           
           ${orderbumpText}
+          ${pack2in1Text}
 
           <!-- Box Informativo de Alerta (Login Sem Senha) -->
           <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">

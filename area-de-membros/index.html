@@ -252,6 +252,30 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Card 6: Novo Orderbump (Pack 2 em 1) -->
+                <div class="deliverable-card" id="card-orderbump-pack2in1" style="display: none;">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/HDnwnrT5/image.png" alt="Adicional Pack 2 em 1">
+                        <span class="card-tag" style="background-color: #ef4444; color: white;">Adicional</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Pack 2 em 1: Esculpimento + Relaxamento Corporal Prático</h3>
+                        <p>Aumente a qualidade dos seus atendimentos com um combo prático de protocolos prontos de Esculpimento e Relaxamento Corporal. Um material direto e aplicável, ideal para transformar sessões comuns em experiências mais completas, unindo resultado estético e bem-estar de forma simples e eficiente no dia a dia profissional.</p>
+                        <div class="card-footer-actions">
+                            <a href="../orderbump/Pack_2em1.pdf" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="5"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Seção do Certificado -->
@@ -409,11 +433,12 @@
                 sessionStorage.setItem('user_logged_in', 'true');
                 sessionStorage.setItem('user_email', email);
                 sessionStorage.setItem('user_name', data.nome || '');
-                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false, false]));
+                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false, false, false]));
                 sessionStorage.setItem('cert_key', data.chave_certificado || '');
                 sessionStorage.setItem('cert_date', data.data_conclusao || '');
                 sessionStorage.setItem('user_plan', data.plano || 'Completo');
                 sessionStorage.setItem('user_orderbump', data.orderbump === true ? 'true' : 'false');
+                sessionStorage.setItem('user_orderbump_pack2in1', data.orderbump_pack2in1 === true ? 'true' : 'false');
 
                 // Atualizar e exibir dashboard
                 checkSessionState();
@@ -437,6 +462,7 @@
             sessionStorage.removeItem('cert_date');
             sessionStorage.removeItem('user_plan');
             sessionStorage.removeItem('user_orderbump');
+            sessionStorage.removeItem('user_orderbump_pack2in1');
 
             // Limpar formulário de login e resetar visual
             document.getElementById('login-email').value = '';
@@ -489,6 +515,14 @@
                     document.getElementById('card-orderbump').style.display = 'flex';
                 } else {
                     document.getElementById('card-orderbump').style.display = 'none';
+                }
+
+                // Controlar exibição do segundo orderbump
+                const hasPack2in1 = sessionStorage.getItem('user_orderbump_pack2in1') === 'true';
+                if (hasPack2in1) {
+                    document.getElementById('card-orderbump-pack2in1').style.display = 'flex';
+                } else {
+                    document.getElementById('card-orderbump-pack2in1').style.display = 'none';
                 }
 
                 // Preencher nome no input do certificado se já existir
@@ -565,6 +599,7 @@
         function updateProgressPercentage() {
             const isBasic = sessionStorage.getItem('user_plan') === 'Básico';
             const hasOrderbump = sessionStorage.getItem('user_orderbump') === 'true';
+            const hasPack2in1 = sessionStorage.getItem('user_orderbump_pack2in1') === 'true';
             
             const checkboxes = document.querySelectorAll('.deliverable-check');
             let activeCheckboxes = Array.from(checkboxes);
@@ -572,7 +607,8 @@
             activeCheckboxes = activeCheckboxes.filter(cb => {
                 const idx = cb.getAttribute('data-index');
                 if (idx === '0') return true; // Guia Principal
-                if (idx === '4') return hasOrderbump; // Orderbump
+                if (idx === '4') return hasOrderbump; // Orderbump 1
+                if (idx === '5') return hasPack2in1; // Orderbump 2 (Pack 2 em 1)
                 return !isBasic; // Bônus 1, 2, 3 se for Completo
             });
 
