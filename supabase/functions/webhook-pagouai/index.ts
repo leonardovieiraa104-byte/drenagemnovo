@@ -254,7 +254,7 @@ serve(async (req) => {
       console.log(`Aluno ${email} cadastrado/atualizado na tabela pública com sucesso!`, dataFinal)
 
       // O link de acesso à área de membros é direto
-      const siteUrl = "https://drenagemlinfatica.netlify.app/area-de-membros/"
+      const siteUrl = "https://drenagemlinfatica.hyzencompra.shop/area-de-membros/"
 
       // Determinar assunto e template do e-mail de acordo com a compra
       let subject = "Seu acesso à Área de Membros está liberado! 🎓"
