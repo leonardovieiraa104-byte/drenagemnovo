@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.vscode
+netlify
+netlify.toml
+_redirects
+supabase
+drenagem_linfatica.zip
+Dockerfile
+.dockerignore
