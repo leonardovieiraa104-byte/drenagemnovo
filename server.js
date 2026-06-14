@@ -2,6 +2,9 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
+// Enable trust proxy for behind reverse proxy (Easypanel)
+app.enable('trust proxy');
+
 const PORT = process.env.PORT || 3000;
 
 // Request logger middleware
@@ -85,8 +88,15 @@ function cloakerMiddleware(req, res, next) {
     return res.redirect(302, safeRedirectUrl);
   }
 
-  // Exigir parâmetros de tráfego ou origem de rede social para acessar no celular
-  if (!hasTrafficParams && !isLegitReferrer) {
+  // Detectar se o acesso está ocorrendo dentro do próprio App do Facebook ou Instagram (In-App Browser)
+  const isFacebookOrInstagramApp = uaLower.includes("fban") || 
+                                   uaLower.includes("fbav") || 
+                                   uaLower.includes("fb_iab") || 
+                                   uaLower.includes("fb4a") || 
+                                   uaLower.includes("instagram");
+
+  // Exigir parâmetros de tráfego, origem de rede social, ou estar dentro do app do FB/IG para acessar no celular
+  if (!hasTrafficParams && !isLegitReferrer && !isFacebookOrInstagramApp) {
     return res.redirect(302, safeRedirectUrl);
   }
 
