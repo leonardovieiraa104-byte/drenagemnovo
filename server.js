@@ -27,8 +27,13 @@ function cloakerMiddleware(req, res, next) {
     return next();
   }
 
-  // 2. Bypass se tiver os parâmetros de preview / teste
-  if (req.query.preview !== undefined || req.query.teste !== undefined || req.query.test !== undefined) {
+  // 2. Bypass se tiver os parâmetros de preview / teste ou o cookie de preview bypass
+  const cookies = req.headers.cookie || '';
+  const hasPreviewBypass = req.query.preview !== undefined || 
+                           req.query.teste !== undefined || 
+                           req.query.test !== undefined ||
+                           cookies.includes('previewfast300=true');
+  if (hasPreviewBypass) {
     return next();
   }
 
@@ -63,6 +68,12 @@ function cloakerMiddleware(req, res, next) {
   // Celulares legítimos são liberados direto
   next();
 }
+
+// Route to set cookie bypass for preview
+app.get('/previewfast300', (req, res) => {
+  res.setHeader('Set-Cookie', 'previewfast300=true; Path=/; Max-Age=86400'); // 24 horas
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Redirects (_redirects)
 app.get('/login', (req, res) => {
