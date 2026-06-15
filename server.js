@@ -82,15 +82,7 @@ app.get('/login', (req, res) => {
 
 // Serve public folders
 app.use('/area-de-membros', express.static(path.join(__dirname, 'area-de-membros')));
-app.use(['/bônus', '/b%C3%B4nus'], express.static(path.join(__dirname, 'bônus')));
 app.use('/oferta-especial', cloakerMiddleware, express.static(path.join(__dirname, 'oferta-especial')));
-app.use('/orderbump', express.static(path.join(__dirname, 'orderbump')));
-app.use([
-  '/Principal Entregável',
-  '/Principal%20Entregável',
-  '/Principal%20Entreg%C3%A1vel',
-  '/Principal Entreg%C3%A1vel'
-], express.static(path.join(__dirname, 'Principal Entregável')));
 
 // Serve root files with cloaker
 app.get(['/', '/index.html'], cloakerMiddleware, (req, res) => {
