@@ -13,16 +13,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// URL decoding middleware to handle non-ASCII path characters (e.g. bônus, Principal Entregável)
-app.use((req, res, next) => {
-  try {
-    req.url = decodeURIComponent(req.url);
-  } catch (e) {
-    // ignore decoding errors
-  }
-  next();
-});
-
 // Setup query parser (Express uses 'extended' query parser by default, which is fine, but we configure it explicitly)
 app.set('query parser', 'simple');
 
@@ -33,10 +23,15 @@ app.get('/login', (req, res) => {
 
 // Serve public folders
 app.use('/area-de-membros', express.static(path.join(__dirname, 'area-de-membros')));
-app.use('/bônus', express.static(path.join(__dirname, 'bônus')));
+app.use(['/bônus', '/b%C3%B4nus'], express.static(path.join(__dirname, 'bônus')));
 app.use('/oferta-especial', express.static(path.join(__dirname, 'oferta-especial')));
 app.use('/orderbump', express.static(path.join(__dirname, 'orderbump')));
-app.use('/Principal Entregável', express.static(path.join(__dirname, 'Principal Entregável')));
+app.use([
+  '/Principal Entregável',
+  '/Principal%20Entregável',
+  '/Principal%20Entreg%C3%A1vel',
+  '/Principal Entreg%C3%A1vel'
+], express.static(path.join(__dirname, 'Principal Entregável')));
 
 // Serve root files
 app.get(['/', '/index.html'], (req, res) => {
