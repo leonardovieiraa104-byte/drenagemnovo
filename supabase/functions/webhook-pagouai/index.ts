@@ -277,7 +277,7 @@ serve(async (req) => {
       }
 
       // Disparar o e-mail personalizado usando a API do Resend
-      const resendToken = "re_3jsNvZDB_C8nZfu62qGF2NmJ9S1BqsgRN"
+      const resendToken = "re_GrC4Mjvf_JNF6tLj1np1hfMhWTvYD8Uq9"
 
       try {
         const resendResponse = await fetch("https://api.resend.com/emails", {

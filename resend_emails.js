@@ -1,12 +1,35 @@
 const fs = require('fs');
 const path = require('path');
 
-const RESEND_TOKEN = "re_3jsNvZDB_C8nZfu62qGF2NmJ9S1BqsgRN";
+// MÉTODOS DE ENVIO DISPONÍVEIS: "resend", "plunk", "brevo" ou "smtp"
+const SEND_METHOD = "resend"; 
+
+// 1. Configurações para RESEND
+const RESEND_TOKEN = "re_GrC4Mjvf_JNF6tLj1np1hfMhWTvYD8Uq9";
+
+// 2. Configurações para PLUNK (1.000 e-mails grátis por mês, sem limite diário)
+const PLUNK_API_KEY = "SUA_API_KEY_DO_PLUNK_AQUI";
+
+// 3. Configurações para BREVO (antigo Sendinblue) - 300 emails por dia grátis
+const BREVO_API_KEY = "SUA_API_KEY_DO_BREVO_AQUI";
+
+// 4. Configurações para SMTP (Gmail pessoal, Hostinger, etc.)
+// Nota: Para usar SMTP, execute antes no terminal: npm install nodemailer
+const SMTP_CONFIG = {
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // true para 465, false para 587
+  auth: {
+    user: "seu-email@gmail.com",
+    pass: "sua-senha-de-app-ou-senha-smtp" // Para Gmail, use Senha de App
+  }
+};
+
 const SENDER = "Drenagem Linfática <acesso@drenagemlinfatica.hyzencompra.shop>";
 const NEW_DOMAIN = "https://drenagemlinfatica.hyzencompra.shop/area-de-membros/";
 
 // Path of the exported database file
-const DATA_FILE_PATH = "C:/Users/Leonardo/.gemini/antigravity-ide/brain/f6c62d5a-3376-401a-b7b7-e15adb7e997b/.system_generated/steps/241/output.txt";
+const DATA_FILE_PATH = "C:/Users/Leonardo/.gemini/antigravity-ide/brain/f6c62d5a-3376-401a-b7b7-e15adb7e997b/.system_generated/steps/393/output.txt";
 
 function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
   const orderbumpText = comOrderbump 
@@ -186,7 +209,7 @@ function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
 }
 
 // Function to send a single email via Resend API
-async function sendEmail(email, name, plano, comOrderbump, comPack2in1) {
+async function sendEmailResend(email, name, plano, comOrderbump, comPack2in1) {
   const subject = (comOrderbump || comPack2in1)
     ? "Seu acesso está liberado + Material adicional incluso! 🎓"
     : "Seu acesso à Área de Membros está liberado! 🎓";
@@ -214,6 +237,116 @@ async function sendEmail(email, name, plano, comOrderbump, comPack2in1) {
   return data;
 }
 
+// Function to send a single email via Brevo API
+async function sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1) {
+  const subject = (comOrderbump || comPack2in1)
+    ? "Seu acesso está liberado + Material adicional incluso! 🎓"
+    : "Seu acesso à Área de Membros está liberado! 🎓";
+
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY,
+      "Content-Type": "application/json",
+      "accept": "application/json"
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "Drenagem Linfática",
+        email: SENDER.match(/<(.+)>/)[1] // Extract email from "Name <email>"
+      },
+      to: [{ email: email, name: name }],
+      subject: subject,
+      htmlContent: emailHtml
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(JSON.stringify(data));
+  }
+  return data;
+}
+
+// Function to send a single email via SMTP
+async function sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1) {
+  let nodemailer;
+  try {
+    nodemailer = require('nodemailer');
+  } catch (e) {
+    throw new Error("O pacote 'nodemailer' não está instalado. Por favor, execute: npm install nodemailer");
+  }
+
+  const transporter = nodemailer.createTransport(SMTP_CONFIG);
+  const subject = (comOrderbump || comPack2in1)
+    ? "Seu acesso está liberado + Material adicional incluso! 🎓"
+    : "Seu acesso à Área de Membros está liberado! 🎓";
+
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+
+  const mailOptions = {
+    from: SENDER,
+    to: email,
+    subject: subject,
+    html: emailHtml
+  };
+
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(info);
+    });
+  });
+}
+
+// Function to send a single email via Plunk API
+async function sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1) {
+  const subject = (comOrderbump || comPack2in1)
+    ? "Seu acesso está liberado + Material adicional incluso! 🎓"
+    : "Seu acesso à Área de Membros está liberado! 🎓";
+
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+
+  const response = await fetch("https://api.useplunk.com/v1/send", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${PLUNK_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      to: email,
+      subject: subject,
+      body: emailHtml,
+      from: SENDER
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(JSON.stringify(data));
+  }
+  return data;
+}
+
+// Unified wrapper function to send email based on SEND_METHOD
+async function sendEmail(email, name, plano, comOrderbump, comPack2in1) {
+  if (SEND_METHOD === "resend") {
+    return sendEmailResend(email, name, plano, comOrderbump, comPack2in1);
+  } else if (SEND_METHOD === "plunk") {
+    return sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1);
+  } else if (SEND_METHOD === "brevo") {
+    return sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1);
+  } else if (SEND_METHOD === "smtp") {
+    return sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1);
+  } else {
+    throw new Error(`Método de envio desconhecido: ${SEND_METHOD}`);
+  }
+}
+
 // Main execution function
 async function main() {
   const args = process.argv.slice(2);
@@ -223,7 +356,7 @@ async function main() {
   if (!isSendMode && !isTestMode) {
     console.log("Por favor, use um dos argumentos abaixo para executar:");
     console.log("  node resend_emails.js --test  -> Envia apenas 1 email de teste para você.");
-    console.log("  node resend_emails.js --send  -> Envia para todos os 593 alunos em lote.");
+    console.log("  node resend_emails.js --send  -> Envia para todos os alunos em lote.");
     process.exit(0);
   }
 
@@ -244,14 +377,33 @@ async function main() {
   const students = JSON.parse(match[1]);
   console.log(`Sucesso: ${students.length} alunos carregados.`);
 
+  // Load log of already sent emails to resume properly
+  const logFile = path.join(__dirname, "resend_results.log");
+  const sentEmails = new Set();
+  if (fs.existsSync(logFile)) {
+    const logContent = fs.readFileSync(logFile, "utf8");
+    const lines = logContent.split("\n");
+    for (const line of lines) {
+      if (line.startsWith("[OK]")) {
+        // Line format: "[OK] email@domain.com - Name"
+        const emailMatch = line.match(/^\[OK\]\s+([^\s]+)/);
+        if (emailMatch) {
+          sentEmails.add(emailMatch[1].trim());
+        }
+      }
+    }
+    console.log(`Encontrados ${sentEmails.size} emails já enviados no log de resultados.`);
+  }
+
   if (isTestMode) {
     console.log("\n--- MODO TESTE ---");
+    console.log(`Usando método de envio: "${SEND_METHOD.toUpperCase()}"`);
     // Find Leonardo's email or use first student for testing
     const testStudent = students.find(s => s.email.includes("leonardo")) || students[0];
     console.log(`Enviando e-mail de teste para: ${testStudent.nome} <${testStudent.email}>...`);
     try {
       // For safety in test mode, we send it to your email
-      const res = await sendEmail("leonardovieira68478@gmail.com", "Leonardo Vieira (Teste)", testStudent.plano, testStudent.orderbump, testStudent.orderbump_pack2in1);
+      const res = await sendEmail("leonardovieiracontas@gmail.com", "Leonardo Vieira (Teste)", testStudent.plano, testStudent.orderbump, testStudent.orderbump_pack2in1);
       console.log("E-mail de teste enviado com sucesso!", res);
     } catch (err) {
       console.error("Erro ao enviar e-mail de teste:", err.message);
@@ -261,16 +413,28 @@ async function main() {
 
   if (isSendMode) {
     console.log("\n--- MODO DISPARO EM LOTE ---");
+    console.log(`Usando método de envio: "${SEND_METHOD.toUpperCase()}"`);
     console.log(`Iniciando envio para ${students.length} alunos. Delay de 300ms por e-mail...`);
     
     let successCount = 0;
     let failureCount = 0;
-    const logFile = path.join(__dirname, "resend_results.log");
-    fs.writeFileSync(logFile, `=== Início do Envio: ${new Date().toISOString()} ===\n`);
+    let skippedCount = 0;
+
+    if (!fs.existsSync(logFile)) {
+      fs.writeFileSync(logFile, `=== Início do Envio: ${new Date().toISOString()} ===\n`);
+    } else {
+      fs.appendFileSync(logFile, `\n=== Reinício do Envio: ${new Date().toISOString()} ===\n`);
+    }
 
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
       const percent = ((i + 1) / students.length * 100).toFixed(1);
+      
+      if (sentEmails.has(student.email)) {
+        skippedCount++;
+        console.log(`[${i + 1}/${students.length}] (${percent}%) [PULADO] ${student.email} (Já enviado anteriormente)`);
+        continue;
+      }
       
       console.log(`[${i + 1}/${students.length}] (${percent}%) Enviando para: ${student.email}...`);
       
@@ -289,8 +453,10 @@ async function main() {
     }
 
     console.log("\n=== FIM DO DISPARO ===");
-    console.log(`Enviados com sucesso: ${successCount}`);
-    console.log(`Erros: ${failureCount}`);
+    console.log(`Total de alunos analisados: ${students.length}`);
+    console.log(`Já enviados anteriormente (pulados): ${skippedCount}`);
+    console.log(`Enviados com sucesso nesta rodada: ${successCount}`);
+    console.log(`Erros nesta rodada: ${failureCount}`);
     console.log(`Log detalhado escrito em: ${logFile}`);
   }
 }
