@@ -276,6 +276,30 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Card 7: Novo Orderbump (Ventosaterapia) -->
+                <div class="deliverable-card" id="card-orderbump-ventosaterapia" style="display: none;">
+                    <div class="card-banner">
+                        <img src="https://i.ibb.co/gLGB5n03/image.png" alt="Adicional Ventosaterapia">
+                        <span class="card-tag" style="background-color: #ef4444; color: white;">Adicional</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Ventosaterapia para Dores e Tensões</h3>
+                        <p>Aprenda a aplicar a ventosaterapia de forma prática e segura para alívio de dores musculares e tensões corporais. Um material complementar ilustrado passo a passo para enriquecer seus atendimentos.</p>
+                        <div class="card-footer-actions">
+                            <a href="https://drive.google.com/file/d/1h_i0PWg6KrxWDKN1UeWYfb5NGYSZIDEm/view" target="_blank" class="open-material-btn">
+                                <i class="ph-bold ph-file-pdf"></i> Abrir Material
+                            </a>
+                            <label class="check-container" title="Marcar como Concluído">
+                                <input type="checkbox" class="check-input deliverable-check" data-index="6"
+                                    onchange="toggleCheck(this)">
+                                <div class="custom-checkbox">
+                                    <i class="ph-bold ph-check"></i>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Seção do Certificado -->
@@ -433,12 +457,13 @@
                 sessionStorage.setItem('user_logged_in', 'true');
                 sessionStorage.setItem('user_email', email);
                 sessionStorage.setItem('user_name', data.nome || '');
-                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false, false, false]));
+                sessionStorage.setItem('user_progress', JSON.stringify(data.progresso || [false, false, false, false, false, false, false]));
                 sessionStorage.setItem('cert_key', data.chave_certificado || '');
                 sessionStorage.setItem('cert_date', data.data_conclusao || '');
                 sessionStorage.setItem('user_plan', data.plano || 'Completo');
                 sessionStorage.setItem('user_orderbump', data.orderbump === true ? 'true' : 'false');
                 sessionStorage.setItem('user_orderbump_pack2in1', data.orderbump_pack2in1 === true ? 'true' : 'false');
+                sessionStorage.setItem('user_orderbump_ventosaterapia', data.orderbump_ventosaterapia === true ? 'true' : 'false');
 
                 // Atualizar e exibir dashboard
                 checkSessionState();
@@ -463,6 +488,7 @@
             sessionStorage.removeItem('user_plan');
             sessionStorage.removeItem('user_orderbump');
             sessionStorage.removeItem('user_orderbump_pack2in1');
+            sessionStorage.removeItem('user_orderbump_ventosaterapia');
 
             // Limpar formulário de login e resetar visual
             document.getElementById('login-email').value = '';
@@ -523,6 +549,14 @@
                     document.getElementById('card-orderbump-pack2in1').style.display = 'flex';
                 } else {
                     document.getElementById('card-orderbump-pack2in1').style.display = 'none';
+                }
+
+                // Controlar exibição do terceiro orderbump (Ventosaterapia)
+                const hasVentosaterapia = sessionStorage.getItem('user_orderbump_ventosaterapia') === 'true';
+                if (hasVentosaterapia) {
+                    document.getElementById('card-orderbump-ventosaterapia').style.display = 'flex';
+                } else {
+                    document.getElementById('card-orderbump-ventosaterapia').style.display = 'none';
                 }
 
                 // Preencher nome no input do certificado se já existir
@@ -600,6 +634,7 @@
             const isBasic = sessionStorage.getItem('user_plan') === 'Básico';
             const hasOrderbump = sessionStorage.getItem('user_orderbump') === 'true';
             const hasPack2in1 = sessionStorage.getItem('user_orderbump_pack2in1') === 'true';
+            const hasVentosaterapia = sessionStorage.getItem('user_orderbump_ventosaterapia') === 'true';
             
             const checkboxes = document.querySelectorAll('.deliverable-check');
             let activeCheckboxes = Array.from(checkboxes);
@@ -609,6 +644,7 @@
                 if (idx === '0') return true; // Guia Principal
                 if (idx === '4') return hasOrderbump; // Orderbump 1
                 if (idx === '5') return hasPack2in1; // Orderbump 2 (Pack 2 em 1)
+                if (idx === '6') return hasVentosaterapia; // Orderbump 3 (Ventosaterapia)
                 return !isBasic; // Bônus 1, 2, 3 se for Completo
             });
 

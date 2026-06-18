@@ -155,12 +155,16 @@ serve(async (req) => {
       // 2. Identificar se comprou os adicionais (orderbumps)
       let comprouOrderbump = false
       let comprouPack2in1 = false
+      let comprouVentosaterapia = false
       planOrProductNames.forEach(name => {
         if (name.includes('massagens') || name.includes('emagrecedoras')) {
           comprouOrderbump = true
         }
         if (name.includes('esculpimento') || name.includes('relaxamento') || name.includes('pack 2 em 1') || name.includes('pack_2em1') || name.includes('pack')) {
           comprouPack2in1 = true
+        }
+        if (name.includes('ventosaterapia') || name.includes('ventosa')) {
+          comprouVentosaterapia = true
         }
       })
 
@@ -211,6 +215,7 @@ serve(async (req) => {
         if (planoIdentificado) updatePayload.plano = planoIdentificado
         if (comprouOrderbump) updatePayload.orderbump = true
         if (comprouPack2in1) updatePayload.orderbump_pack2in1 = true
+        if (comprouVentosaterapia) updatePayload.orderbump_ventosaterapia = true
 
         console.log(`Aluno já existe. Atualizando dados:`, updatePayload)
 
@@ -229,7 +234,8 @@ serve(async (req) => {
           nome: nome,
           plano: planoIdentificado ?? 'Completo', // fallback Completo se não identificado
           orderbump: comprouOrderbump,
-          orderbump_pack2in1: comprouPack2in1
+          orderbump_pack2in1: comprouPack2in1,
+          orderbump_ventosaterapia: comprouVentosaterapia
         }
 
         console.log(`Aluno novo. Criando registro:`, insertPayload)
@@ -263,16 +269,17 @@ serve(async (req) => {
       
       const finalComOrderbump = comprouOrderbump || (alunoExistente?.orderbump ?? false)
       const finalComPack2in1 = comprouPack2in1 || (alunoExistente?.orderbump_pack2in1 ?? false)
+      const finalComVentosaterapia = comprouVentosaterapia || (alunoExistente?.orderbump_ventosaterapia ?? false)
 
-      if (comprouOrderbump || comprouPack2in1) {
+      if (comprouOrderbump || comprouPack2in1 || comprouVentosaterapia) {
         subject = "Seu acesso está liberado + Material adicional incluso! 🎓"
-        emailHtml = getEmailHtml(nome || (alunoExistente?.nome ?? ""), siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
+        emailHtml = getEmailHtml(nome || (alunoExistente?.nome ?? ""), siteUrl, planoFinal, finalComOrderbump, finalComPack2in1, finalComVentosaterapia)
       } else {
         if (alunoExistente) {
           subject = "Seu acesso à Área de Membros foi atualizado! 🎓"
-          emailHtml = getEmailHtml(nome || alunoExistente.nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
+          emailHtml = getEmailHtml(nome || alunoExistente.nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1, finalComVentosaterapia)
         } else {
-          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1)
+          emailHtml = getEmailHtml(nome, siteUrl, planoFinal, finalComOrderbump, finalComPack2in1, finalComVentosaterapia)
         }
       }
 
@@ -321,7 +328,7 @@ serve(async (req) => {
   }
 })
 
-function getEmailHtml(name: string, actionLink: string, plano: string, comOrderbump: boolean, comPack2in1: boolean) {
+function getEmailHtml(name: string, actionLink: string, plano: string, comOrderbump: boolean, comPack2in1: boolean, comVentosaterapia: boolean) {
   const orderbumpText = comOrderbump 
     ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
@@ -336,6 +343,15 @@ function getEmailHtml(name: string, actionLink: string, plano: string, comOrderb
          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
            <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
            O seu bônus adicional <strong>Pack 2 em 1: Esculpimento + Relaxamento Corporal Prático</strong> também já está disponível na sua conta!
+         </p>
+       </div>`
+    : "";
+
+  const ventosaterapiaText = comVentosaterapia 
+    ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+         <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
+           <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
+           O seu bônus adicional <strong>Ventosaterapia para Dores e Tensões</strong> também já está disponível na sua conta!
          </p>
        </div>`
     : "";
@@ -463,6 +479,7 @@ function getEmailHtml(name: string, actionLink: string, plano: string, comOrderb
           
           ${orderbumpText}
           ${pack2in1Text}
+          ${ventosaterapiaText}
 
           <!-- Box Informativo de Alerta (Login Sem Senha) -->
           <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">

@@ -31,7 +31,7 @@ const NEW_DOMAIN = "https://drenagemlinfatica.hyzencompra.shop/area-de-membros/"
 // Path of the exported database file
 const DATA_FILE_PATH = "C:/Users/Leonardo/.gemini/antigravity-ide/brain/f6c62d5a-3376-401a-b7b7-e15adb7e997b/.system_generated/steps/393/output.txt";
 
-function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
+function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1, comVentosaterapia) {
   const orderbumpText = comOrderbump 
     ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
@@ -46,6 +46,15 @@ function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
          <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
            <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
            O seu bônus adicional <strong>Pack 2 em 1: Esculpimento + Relaxamento Corporal Prático</strong> também já está disponível na sua conta!
+         </p>
+       </div>`
+    : "";
+
+  const ventosaterapiaText = comVentosaterapia 
+    ? `<div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
+         <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.5; font-weight: 500;">
+           <strong>🎉 MATERIAL ADICIONAL LIBERADO!</strong><br>
+           O seu bônus adicional <strong>Ventosaterapia para Dores e Tensões</strong> também já está disponível na sua conta!
          </p>
        </div>`
     : "";
@@ -173,6 +182,7 @@ function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
           
           ${orderbumpText}
           ${pack2in1Text}
+          ${ventosaterapiaText}
 
           <!-- Box Informativo de Alerta (Login Sem Senha) -->
           <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 25px; border-radius: 6px;">
@@ -209,12 +219,12 @@ function getEmailHtml(name, actionLink, plano, comOrderbump, comPack2in1) {
 }
 
 // Function to send a single email via Resend API
-async function sendEmailResend(email, name, plano, comOrderbump, comPack2in1) {
-  const subject = (comOrderbump || comPack2in1)
+async function sendEmailResend(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia) {
+  const subject = (comOrderbump || comPack2in1 || comVentosaterapia)
     ? "Seu acesso está liberado + Material adicional incluso! 🎓"
     : "Seu acesso à Área de Membros está liberado! 🎓";
 
-  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1, comVentosaterapia);
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -238,12 +248,12 @@ async function sendEmailResend(email, name, plano, comOrderbump, comPack2in1) {
 }
 
 // Function to send a single email via Brevo API
-async function sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1) {
-  const subject = (comOrderbump || comPack2in1)
+async function sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia) {
+  const subject = (comOrderbump || comPack2in1 || comVentosaterapia)
     ? "Seu acesso está liberado + Material adicional incluso! 🎓"
     : "Seu acesso à Área de Membros está liberado! 🎓";
 
-  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1, comVentosaterapia);
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -271,7 +281,7 @@ async function sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1) {
 }
 
 // Function to send a single email via SMTP
-async function sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1) {
+async function sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia) {
   let nodemailer;
   try {
     nodemailer = require('nodemailer');
@@ -280,11 +290,11 @@ async function sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1) {
   }
 
   const transporter = nodemailer.createTransport(SMTP_CONFIG);
-  const subject = (comOrderbump || comPack2in1)
+  const subject = (comOrderbump || comPack2in1 || comVentosaterapia)
     ? "Seu acesso está liberado + Material adicional incluso! 🎓"
     : "Seu acesso à Área de Membros está liberado! 🎓";
 
-  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1, comVentosaterapia);
 
   const mailOptions = {
     from: SENDER,
@@ -304,12 +314,12 @@ async function sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1) {
 }
 
 // Function to send a single email via Plunk API
-async function sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1) {
-  const subject = (comOrderbump || comPack2in1)
+async function sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia) {
+  const subject = (comOrderbump || comPack2in1 || comVentosaterapia)
     ? "Seu acesso está liberado + Material adicional incluso! 🎓"
     : "Seu acesso à Área de Membros está liberado! 🎓";
 
-  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1);
+  const emailHtml = getEmailHtml(name, NEW_DOMAIN, plano, comOrderbump, comPack2in1, comVentosaterapia);
 
   const response = await fetch("https://api.useplunk.com/v1/send", {
     method: "POST",
@@ -333,15 +343,15 @@ async function sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1) {
 }
 
 // Unified wrapper function to send email based on SEND_METHOD
-async function sendEmail(email, name, plano, comOrderbump, comPack2in1) {
+async function sendEmail(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia) {
   if (SEND_METHOD === "resend") {
-    return sendEmailResend(email, name, plano, comOrderbump, comPack2in1);
+    return sendEmailResend(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia);
   } else if (SEND_METHOD === "plunk") {
-    return sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1);
+    return sendEmailPlunk(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia);
   } else if (SEND_METHOD === "brevo") {
-    return sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1);
+    return sendEmailBrevo(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia);
   } else if (SEND_METHOD === "smtp") {
-    return sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1);
+    return sendEmailSMTP(email, name, plano, comOrderbump, comPack2in1, comVentosaterapia);
   } else {
     throw new Error(`Método de envio desconhecido: ${SEND_METHOD}`);
   }
@@ -402,8 +412,8 @@ async function main() {
     const testStudent = students.find(s => s.email.includes("leonardo")) || students[0];
     console.log(`Enviando e-mail de teste para: ${testStudent.nome} <${testStudent.email}>...`);
     try {
-      // For safety in test mode, we send it to your email
-      const res = await sendEmail("leonardovieiracontas@gmail.com", "Leonardo Vieira (Teste)", testStudent.plano, testStudent.orderbump, testStudent.orderbump_pack2in1);
+      // For safety in test mode, we send it to your email with all orderbumps enabled to verify layouts
+      const res = await sendEmail("leonardovieiracontas@gmail.com", "Leonardo Vieira (Teste)", testStudent.plano, true, true, true);
       console.log("E-mail de teste enviado com sucesso!", res);
     } catch (err) {
       console.error("Erro ao enviar e-mail de teste:", err.message);
@@ -439,7 +449,7 @@ async function main() {
       console.log(`[${i + 1}/${students.length}] (${percent}%) Enviando para: ${student.email}...`);
       
       try {
-        await sendEmail(student.email, student.nome, student.plano, student.orderbump, student.orderbump_pack2in1);
+        await sendEmail(student.email, student.nome, student.plano, student.orderbump, student.orderbump_pack2in1, student.orderbump_ventosaterapia);
         successCount++;
         fs.appendFileSync(logFile, `[OK] ${student.email} - ${student.nome}\n`);
       } catch (err) {
