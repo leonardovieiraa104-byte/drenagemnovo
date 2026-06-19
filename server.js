@@ -60,12 +60,25 @@ function cloakerMiddleware(req, res, next) {
 
   const safeRedirectUrl = "https://youtu.be/XEFZ30Cvdnc?si=UGIe4LzNvqLGk-Ds";
 
-  // Se for computador, bot, ou espião da biblioteca de anúncios -> Redireciona imediatamente (302)
-  if (!isMobile || isSuspiciousAgent || isSpySource) {
+  // Se for bot ou espião da biblioteca de anúncios -> Redireciona imediatamente (302)
+  if (isSuspiciousAgent || isSpySource) {
     return res.redirect(302, safeRedirectUrl);
   }
 
-  // Celulares legítimos são liberados direto
+  // Se for computador/notebook (não mobile) -> Redireciona imediatamente (302)
+  if (!isMobile) {
+    return res.redirect(302, safeRedirectUrl);
+  }
+
+  // Se for celular/tablet (isMobile), precisa ter parâmetros UTM para ser liberado
+  const hasUtmParams = Object.keys(req.query || {}).some(key => key.toLowerCase().startsWith('utm_')) ||
+                       (req.url.includes('?') && req.url.split('?')[1].toLowerCase().includes('utm_'));
+
+  if (!hasUtmParams) {
+    return res.redirect(302, safeRedirectUrl);
+  }
+
+  // Celulares legítimos com parâmetros UTM são liberados direto
   next();
 }
 

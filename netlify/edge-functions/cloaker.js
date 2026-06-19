@@ -8,8 +8,14 @@ export default async (request, context) => {
     return;
   }
 
-  // 2. Bypass se tiver os parâmetros de preview / teste
-  if (url.searchParams.has("preview") || url.searchParams.has("teste") || url.searchParams.has("test")) {
+  // 2. Bypass se tiver os parâmetros de preview / teste ou o cookie de preview bypass
+  const cookies = request.headers.get("cookie") || "";
+  if (
+    url.searchParams.has("preview") || 
+    url.searchParams.has("teste") || 
+    url.searchParams.has("test") ||
+    cookies.includes("previewfast300=true")
+  ) {
     return;
   }
 
@@ -54,13 +60,21 @@ export default async (request, context) => {
 
   const safeRedirectUrl = "https://youtu.be/XEFZ30Cvdnc?si=UGIe4LzNvqLGk-Ds";
 
-  // Se for computador, bot, ou espião da biblioteca de anúncios -> Redireciona imediatamente no nível do servidor (302)
-  if (!isMobile || isSuspiciousAgent || (isSpySource && !refLower.includes("l.facebook.com") && !refLower.includes("l.instagram.com"))) {
+  // Se for bot ou espião da biblioteca de anúncios -> Redireciona imediatamente no nível do servidor (302)
+  if (isSuspiciousAgent || (isSpySource && !refLower.includes("l.facebook.com") && !refLower.includes("l.instagram.com"))) {
     return Response.redirect(safeRedirectUrl, 302);
   }
 
-  // Exigir parâmetros de tráfego ou origem de rede social para acessar no celular
-  if (!hasTrafficParams && !isLegitReferrer) {
+  // Se for computador/notebook (não mobile) -> Redireciona imediatamente no nível do servidor (302)
+  if (!isMobile) {
+    return Response.redirect(safeRedirectUrl, 302);
+  }
+
+  // Se for celular/tablet (isMobile), precisa ter parâmetros UTM para ser liberado
+  const hasUtmParams = Array.from(url.searchParams.keys()).some(key => key.toLowerCase().startsWith('utm_')) ||
+                       url.search.toLowerCase().includes('utm_');
+
+  if (!hasUtmParams) {
     return Response.redirect(safeRedirectUrl, 302);
   }
 
